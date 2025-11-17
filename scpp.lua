@@ -558,55 +558,7 @@ local Toggle = MainTab:CreateToggle({
    end,
 })
 
-local Toggle = MainTab:CreateToggle({
-   Name = "强制显示聊天框",
-   CurrentValue = false,
-   Flag = "ForceChatToggle",
-   Callback = function(Value)
-       local success, errorMsg = pcall(function()
-           if Value then
-               local StarterGui = game:GetService("StarterGui")
-               StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat, true)
-               print("强制显示聊天框已启用！")
-           else
-               print("强制显示聊天框已禁用！")
-           end
-       end)
-       
-       if not success then
-           warn("强制显示聊天框回调错误: " .. tostring(errorMsg))
-       end
-   end,
-})
 
-local Toggle = MainTab:CreateToggle({
-   Name = "强制打开通讯电台",
-   CurrentValue = false,
-   Flag = "ForceRadioToggle",
-   Callback = function(Value)
-       local success, errorMsg = pcall(function()
-           if Value then
-               local LocalPlayer = game:GetService("Players").LocalPlayer
-               local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-               
-               -- 查找并打开COMMUNICATIONS RADIO
-               local radioGui = PlayerGui:FindFirstChild("COMMUNICATIONS RADIO")
-               if radioGui then
-                   radioGui.Enabled = true
-                   print("强制打开通讯电台已启用！")
-               else
-                   warn("未找到COMMUNICATIONS RADIO界面")
-               end
-           else
-               print("强制打开通讯电台已禁用！")
-           end
-       end)
-       
-       if not success then
-           warn("强制打开通讯电台回调错误: " .. tostring(errorMsg))
-       end
-   end,
-})
 
 -- 攻击类Tab
 local CombatTab = Window:CreateTab("攻击类", nil)
