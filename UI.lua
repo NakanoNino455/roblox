@@ -1,5 +1,5 @@
 --[[ 
-    YC GUI Library - Stealth Mode
+    YC GUI Library - Stealth Mode (English Version)
     修改内容:
     1. [新增] 启动时默认隐藏主界面，只显示灵动岛。
     2. [保留] 点击灵动岛才会展开菜单。
@@ -72,49 +72,49 @@ Library.Globals = {
 --// 主题系统 //--
 Library.Themes = {
     ["Default"] = { 
-        Name = "紫罗兰 (Default)",
+        Name = "Violet (Default)", -- 紫罗兰
         Main = Color3.fromRGB(20, 20, 25), MainTrans = 0.1, Gradient1 = Color3.fromRGB(140, 40, 255),
         Text = Color3.fromRGB(255, 255, 255), TextDark = Color3.fromRGB(160, 160, 170),
         SettingBg = Color3.fromRGB(25, 25, 30), Accent = Color3.fromRGB(100, 20, 220),
         Scroll = Color3.fromRGB(80, 60, 100), PickerBg = Color3.fromRGB(30, 30, 35)
     },
     ["Ocean"] = { 
-        Name = "深海蓝 (Ocean)",
+        Name = "Ocean Blue", -- 深海蓝
         Main = Color3.fromRGB(15, 25, 30), MainTrans = 0.1, Gradient1 = Color3.fromRGB(0, 160, 255),
         Text = Color3.fromRGB(240, 255, 255), TextDark = Color3.fromRGB(140, 160, 170),
         SettingBg = Color3.fromRGB(20, 30, 35), Accent = Color3.fromRGB(0, 100, 180),
         Scroll = Color3.fromRGB(50, 70, 90), PickerBg = Color3.fromRGB(20, 35, 40)
     },
     ["Rose"] = { 
-        Name = "暗红玫瑰 (Rose)",
+        Name = "Dark Rose", -- 暗红玫瑰
         Main = Color3.fromRGB(25, 15, 15), MainTrans = 0.1, Gradient1 = Color3.fromRGB(220, 20, 60),
         Text = Color3.fromRGB(255, 230, 230), TextDark = Color3.fromRGB(180, 120, 120),
         SettingBg = Color3.fromRGB(35, 20, 20), Accent = Color3.fromRGB(150, 0, 40),
         Scroll = Color3.fromRGB(90, 50, 50), PickerBg = Color3.fromRGB(40, 25, 25)
     },
     ["Sakura"] = { 
-        Name = "家乡樱花 (Sakura)",
+        Name = "Sakura Pink", -- 家乡樱花
         Main = Color3.fromRGB(30, 25, 35), MainTrans = 0.1, Gradient1 = Color3.fromRGB(255, 160, 200),
         Text = Color3.fromRGB(255, 245, 250), TextDark = Color3.fromRGB(180, 150, 170),
         SettingBg = Color3.fromRGB(40, 30, 45), Accent = Color3.fromRGB(255, 105, 180),
         Scroll = Color3.fromRGB(90, 60, 80), PickerBg = Color3.fromRGB(45, 35, 40)
     },
     ["Mint"] = { 
-        Name = "薄荷绿 (Mint)",
+        Name = "Mint Green", -- 薄荷绿
         Main = Color3.fromRGB(20, 30, 25), MainTrans = 0.1, Gradient1 = Color3.fromRGB(50, 255, 150),
         Text = Color3.fromRGB(240, 255, 240), TextDark = Color3.fromRGB(150, 180, 160),
         SettingBg = Color3.fromRGB(25, 40, 30), Accent = Color3.fromRGB(0, 180, 100),
         Scroll = Color3.fromRGB(40, 90, 60), PickerBg = Color3.fromRGB(25, 35, 30)
     },
     ["Midnight"] = { 
-        Name = "午夜 (Midnight)",
+        Name = "Midnight", -- 午夜
         Main = Color3.fromRGB(10, 10, 12), MainTrans = 0.05, Gradient1 = Color3.fromRGB(255, 140, 0),
         Text = Color3.fromRGB(220, 220, 220), TextDark = Color3.fromRGB(100, 100, 100),
         SettingBg = Color3.fromRGB(15, 15, 20), Accent = Color3.fromRGB(255, 100, 0),
         Scroll = Color3.fromRGB(60, 40, 20), PickerBg = Color3.fromRGB(18, 18, 22)
     },
     ["Sunset"] = { 
-        Name = "日落 (Sunset)",
+        Name = "Sunset Orange", -- 日落
         Main = Color3.fromRGB(30, 20, 30), MainTrans = 0.1, Gradient1 = Color3.fromRGB(255, 69, 0),
         Text = Color3.fromRGB(255, 240, 230), TextDark = Color3.fromRGB(180, 140, 140),
         SettingBg = Color3.fromRGB(40, 25, 35), Accent = Color3.fromRGB(180, 50, 100),
@@ -445,7 +445,7 @@ function Library:Notify(title, status)
     local Frame = Instance.new("Frame"); Frame.Parent=ScreenGui; Frame.BackgroundColor3=Color3.fromRGB(20,20,20); Frame.BackgroundTransparency=0.15; Frame.BorderSizePixel=0; Frame.Size=UDim2.new(0,200,0,35); Frame.Position=UDim2.new(1,50,1,-50)
     local Bar = Instance.new("Frame"); Bar.Parent=Frame; Bar.Size=UDim2.new(0,2,1,0); Bar.BorderSizePixel=0; RegisterObject(Bar, "Accent")
     local TitleLab = Instance.new("TextLabel"); TitleLab.Parent=Frame; TitleLab.Text=title; TitleLab.Font=Enum.Font.GothamBold; TitleLab.TextSize=14; TitleLab.TextColor3=Color3.fromRGB(255,255,255); TitleLab.BackgroundTransparency=1; TitleLab.Size=UDim2.new(1,-10,0.5,0); TitleLab.Position=UDim2.new(0,10,0,3); TitleLab.TextXAlignment=Enum.TextXAlignment.Left
-    local StateLab = Instance.new("TextLabel"); StateLab.Parent=Frame; StateLab.Text=status and "已开启" or "已关闭"; StateLab.Font=Enum.Font.Gotham; StateLab.TextSize=11; StateLab.TextColor3=status and Color3.fromRGB(80,255,80) or Color3.fromRGB(255,80,80); StateLab.BackgroundTransparency=1; StateLab.Size=UDim2.new(1,-10,0.5,0); StateLab.Position=UDim2.new(0,10,0.5,-2); StateLab.TextXAlignment=Enum.TextXAlignment.Left
+    local StateLab = Instance.new("TextLabel"); StateLab.Parent=Frame; StateLab.Text=status and "Enabled" or "Disabled"; StateLab.Font=Enum.Font.Gotham; StateLab.TextSize=11; StateLab.TextColor3=status and Color3.fromRGB(80,255,80) or Color3.fromRGB(255,80,80); StateLab.BackgroundTransparency=1; StateLab.Size=UDim2.new(1,-10,0.5,0); StateLab.Position=UDim2.new(0,10,0.5,-2); StateLab.TextXAlignment=Enum.TextXAlignment.Left
     local TimerFrame = Instance.new("Frame"); TimerFrame.Parent=Frame; TimerFrame.BorderSizePixel=0; TimerFrame.Position=UDim2.new(0,0,1,-2); TimerFrame.Size=UDim2.new(1,0,0,2); TimerFrame.BackgroundColor3 = Color3.new(1,1,1) 
     
     local TimerGradient = Instance.new("UIGradient"); TimerGradient.Parent = TimerFrame
@@ -578,7 +578,7 @@ function Library:CreateWindow(title, pos, isMain, isSub)
                     target.Main.Visible = false
                 end
             else
-                Library:Notify("未找到: "..subWindowName, false)
+                Library:Notify("Not Found: "..subWindowName, false)
             end
         end, false)
         if defaultState then Mod:Set(true) end
@@ -606,11 +606,11 @@ function Library:CreateWindow(title, pos, isMain, isSub)
 
         if allowBind then
             local KB = Instance.new("TextButton"); KB.Parent=SetFrame; KB.Size=UDim2.new(1,0,0,24); KB.BackgroundTransparency=1; KB.Text=""; KB.BorderSizePixel=0
-            local KL = Instance.new("TextLabel"); KL.Parent=KB; KL.Text="绑定: 无"; KL.Font=Enum.Font.Gotham; KL.TextSize=11; KL.BackgroundTransparency=1; KL.Size=UDim2.new(1,-20,1,0); KL.Position=UDim2.new(0,10,0,0); KL.TextXAlignment=Enum.TextXAlignment.Left; RegisterObject(KL, "TextDark")
+            local KL = Instance.new("TextLabel"); KL.Parent=KB; KL.Text="Bind: None"; KL.Font=Enum.Font.Gotham; KL.TextSize=11; KL.BackgroundTransparency=1; KL.Size=UDim2.new(1,-20,1,0); KL.Position=UDim2.new(0,10,0,0); KL.TextXAlignment=Enum.TextXAlignment.Left; RegisterObject(KL, "TextDark")
             local listening = false
             KB.MouseButton1Click:Connect(function()
-                if listening then return end; listening=true; KL.Text="按下按键..."
-                local c; c=UserInputService.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.Keyboard then listening=false; c:Disconnect(); if i.KeyCode.Name=="Backspace" or i.KeyCode.Name=="Delete" then if bindKey then Library.Globals.BoundKeys[bindKey]=nil end; bindKey=nil; KL.Text="绑定: 无" else if bindKey then Library.Globals.BoundKeys[bindKey]=nil end; bindKey=i.KeyCode; Library.Globals.BoundKeys[bindKey]=Toggle; KL.Text="绑定: "..i.KeyCode.Name end end end)
+                if listening then return end; listening=true; KL.Text="Press Key..."
+                local c; c=UserInputService.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.Keyboard then listening=false; c:Disconnect(); if i.KeyCode.Name=="Backspace" or i.KeyCode.Name=="Delete" then if bindKey then Library.Globals.BoundKeys[bindKey]=nil end; bindKey=nil; KL.Text="Bind: None" else if bindKey then Library.Globals.BoundKeys[bindKey]=nil end; bindKey=i.KeyCode; Library.Globals.BoundKeys[bindKey]=Toggle; KL.Text="Bind: "..i.KeyCode.Name end end end)
             end)
             local pt, ip = 0, false
             
@@ -618,7 +618,7 @@ function Library:CreateWindow(title, pos, isMain, isSub)
             Btn.InputBegan:Connect(function(i) 
                 if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then 
                     ip=true; pt=tick(); 
-                    task.spawn(function() task.wait(0.6); if ip and tick()-pt>=0.6 then CreateMobileWidget(name, Toggle, function() return enabled end); Library:Notify("悬浮窗已创建", true); ip=false end end) 
+                    task.spawn(function() task.wait(0.6); if ip and tick()-pt>=0.6 then CreateMobileWidget(name, Toggle, function() return enabled end); Library:Notify("Widget Created", true); ip=false end end) 
                 end 
             end)
             Btn.InputEnded:Connect(function(i) 
@@ -683,17 +683,17 @@ function Library:CreateWindow(title, pos, isMain, isSub)
             local BoxH = 26
             local Container = Instance.new("Frame"); Container.Parent = SetFrame; Container.BackgroundTransparency = 1; Container.Size = UDim2.new(1, 0, 0, BoxH + 4); Container.BorderSizePixel = 0
             
-            local Label = Instance.new("TextLabel"); Label.Parent = Container; Label.Text = text..":"; Label.Font = Enum.Font.Gotham; Label.TextSize = 11; Label.BackgroundTransparency = 1; Label.Size = UDim2.new(0, 60, 1, 0); Label.Position = UDim2.new(0, 10, 0, 0); Label.TextXAlignment = Enum.TextXAlignment.Left; RegisterObject(Label, "TextDark")
+            local Label = Instance.new("TextLabel"); Label.Parent = Container; Label.Text = text..":"; Label.Font = Enum.Font.Gotham; Label.TextSize=11; Label.BackgroundTransparency = 1; Label.Size = UDim2.new(0, 60, 1, 0); Label.Position = UDim2.new(0, 10, 0, 0); Label.TextXAlignment = Enum.TextXAlignment.Left; RegisterObject(Label, "TextDark")
             
             local InputBg = Instance.new("Frame"); InputBg.Parent = Container; InputBg.BackgroundColor3 = Color3.fromRGB(40, 40, 45); InputBg.Size = UDim2.new(1, -80, 0, BoxH); InputBg.Position = UDim2.new(0, 70, 0.5, 0); InputBg.AnchorPoint = Vector2.new(0, 0.5); InputBg.BorderSizePixel = 0
             local Corner = Instance.new("UICorner"); Corner.CornerRadius = UDim.new(0, 4); Corner.Parent = InputBg
             
-            local TextBox = Instance.new("TextBox"); TextBox.Parent = InputBg; TextBox.BackgroundTransparency = 1; TextBox.Size = UDim2.new(1, -10, 1, 0); TextBox.Position = UDim2.new(0, 5, 0, 0); TextBox.Font = Enum.Font.Gotham; TextBox.Text = ""; TextBox.PlaceholderText = placeholder or "输入..."; TextBox.TextSize = 12; TextBox.TextColor3 = Color3.new(1,1,1); TextBox.PlaceholderColor3 = Color3.fromRGB(150,150,150); TextBox.TextXAlignment = Enum.TextXAlignment.Left; TextBox.ClearTextOnFocus = false
+            local TextBox = Instance.new("TextBox"); TextBox.Parent = InputBg; TextBox.BackgroundTransparency = 1; TextBox.Size = UDim2.new(1, -10, 1, 0); TextBox.Position = UDim2.new(0, 5, 0, 0); TextBox.Font = Enum.Font.Gotham; TextBox.Text = ""; TextBox.PlaceholderText = placeholder or "Input..."; TextBox.TextSize = 12; TextBox.TextColor3 = Color3.new(1,1,1); TextBox.PlaceholderColor3 = Color3.fromRGB(150,150,150); TextBox.TextXAlignment = Enum.TextXAlignment.Left; TextBox.ClearTextOnFocus = false
             
             TextBox.FocusLost:Connect(function(enter)
                 if enter then
                     pcall(callback, TextBox.Text)
-                    Library:Notify("输入已应用", true)
+                    Library:Notify("Input Applied", true)
                 end
             end)
         end
@@ -758,7 +758,7 @@ function Library:CreateWindow(title, pos, isMain, isSub)
                 local CornerG = Instance.new("UICorner"); CornerG.Parent = GBox; CornerG.CornerRadius = UDim.new(0,4)
                 local CornerB = Instance.new("UICorner"); CornerB.Parent = BBox; CornerB.CornerRadius = UDim.new(0,4)
                 
-                local ConfirmBtn = Instance.new("TextButton"); ConfirmBtn.Parent = PickerFrame; ConfirmBtn.Size = UDim2.new(1, 0, 0, 25); ConfirmBtn.Position = UDim2.new(0, 0, 1, -25); ConfirmBtn.BackgroundColor3 = CurrentThemeData.Accent; ConfirmBtn.Text = "确定"; ConfirmBtn.Font = Enum.Font.GothamBold; ConfirmBtn.TextColor3 = Color3.new(1,1,1); ConfirmBtn.TextSize = 12; ConfirmBtn.ZIndex = PickerFrame.ZIndex + 1
+                local ConfirmBtn = Instance.new("TextButton"); ConfirmBtn.Parent = PickerFrame; ConfirmBtn.Size = UDim2.new(1, 0, 0, 25); ConfirmBtn.Position = UDim2.new(0, 0, 1, -25); ConfirmBtn.BackgroundColor3 = CurrentThemeData.Accent; ConfirmBtn.Text = "Confirm"; ConfirmBtn.Font = Enum.Font.GothamBold; ConfirmBtn.TextColor3 = Color3.new(1,1,1); ConfirmBtn.TextSize = 12; ConfirmBtn.ZIndex = PickerFrame.ZIndex + 1
                 local CB_Corner = Instance.new("UICorner"); CB_Corner.Parent = ConfirmBtn; CB_Corner.CornerRadius = UDim.new(0, 4)
                 
                 local function UpdateColor(notify)
@@ -833,39 +833,39 @@ end
 --// 内置设置窗口 (改为子窗口模式) //--
 function Library:SetupSettings()
     -- [关键修改] 改为 CreateChildWindow，使其表现为可绑定的子菜单
-    local Sets = Library:CreateChildWindow("UI设置") 
+    local Sets = Library:CreateChildWindow("UI Settings") 
     
-    local UIConf = Sets:CreateModule("界面配置", function() end, false)
-    UIConf:CreateDropdown("主题选择", {"Default", "Ocean", "Rose", "Sakura", "Mint", "Midnight", "Sunset"}, function(v) 
+    local UIConf = Sets:CreateModule("Interface Config", function() end, false)
+    UIConf:CreateDropdown("Select Theme", {"Default", "Ocean", "Rose", "Sakura", "Mint", "Midnight", "Sunset"}, function(v) 
         Library:SetTheme(v)
-        Library:Notify("主题切换", v)
+        Library:Notify("Theme Changed", v)
     end)
     
-    UIConf:CreateSlider("整体缩放(%)", 50, 150, math.floor(Library.Config.UIScale * 100), function(v) 
+    UIConf:CreateSlider("UI Scale (%)", 50, 150, math.floor(Library.Config.UIScale * 100), function(v) 
         Library.Config.UIScale = v / 100; Library:RefreshDimensions() 
     end)
     
-    UIConf:CreateSlider("窗口宽度", 100, 300, Library.Config.WindowWidth, function(v)
+    UIConf:CreateSlider("Window Width", 100, 300, Library.Config.WindowWidth, function(v)
         Library.Config.WindowWidth = v; Library:RefreshDimensions()
     end)
     
-    UIConf:CreateSlider("窗口最大高度", 200, 600, Library.Config.WindowMaxHeight, function(v)
+    UIConf:CreateSlider("Max Height", 200, 600, Library.Config.WindowMaxHeight, function(v)
         Library.Config.WindowMaxHeight = v; Library:RefreshDimensions()
     end)
     
-    local StyleConf = Sets:CreateModule("样式设置", function() end, false)
-    StyleConf:CreateSwitch("圆角风格", function(v) 
+    local StyleConf = Sets:CreateModule("Style Settings", function() end, false)
+    StyleConf:CreateSwitch("Rounded Corners", function(v) 
         Library.Config.UseCorners = v; Library:RefreshStyle(); SaveConfig() 
     end, Library.Config.UseCorners)
-    StyleConf:CreateSwitch("UI 描边", function(v) 
+    StyleConf:CreateSwitch("UI Stroke", function(v) 
         Library.Config.UseStroke = v; Library:RefreshStyle(); SaveConfig() 
     end, Library.Config.UseStroke)
 
-    local FuncConf = Sets:CreateModule("功能开关", function() end, false)
-    FuncConf:CreateSwitch("显示 HUD", function(v) Library:SetHUDVisible(v) end, Library.Config.ShowHUD)
-    FuncConf:CreateSwitch("显示 通知", function(v) Library:SetNotifsVisible(v) end, Library.Config.ShowNotifs)
+    local FuncConf = Sets:CreateModule("Feature Toggles", function() end, false)
+    FuncConf:CreateSwitch("Show HUD", function(v) Library:SetHUDVisible(v) end, Library.Config.ShowHUD)
+    FuncConf:CreateSwitch("Show Notifications", function(v) Library:SetNotifsVisible(v) end, Library.Config.ShowNotifs)
     
-    Sets:CreateButton("保存当前配置", function() SaveConfig(); Library:Notify("配置已保存", true) end)
+    Sets:CreateButton("Save Config", function() SaveConfig(); Library:Notify("Config Saved", true) end)
     return Sets
 end
 
