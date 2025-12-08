@@ -1,13 +1,13 @@
 --[[ 
-    YC GUI Library - Final Fixed (Settings Integrated)
+    YC GUI Library - Stealth Mode
     修改内容:
-    1. [优化] "UI设置" 现在是一个子窗口，不会独立弹窗，需要绑定到主菜单。
-    2. [默认] 默认主题设为 "Default" (紫罗兰)。
-    3. [修复] 包含之前所有的电脑端鼠标/拖拽/滑块修复。
+    1. [新增] 启动时默认隐藏主界面，只显示灵动岛。
+    2. [保留] 点击灵动岛才会展开菜单。
+    3. [保留] 所有之前的鼠标修复和设置窗口逻辑。
 ]]
 
 local Library = {}
-local ConfigName = "YCUI/settings_final.json"
+local ConfigName = "YCUI/settings_stealth.json" -- 修改配置文件名防止冲突
 
 local HttpService = game:GetService("HttpService")
 local UserInputService = game:GetService("UserInputService")
@@ -45,8 +45,9 @@ local DefaultConfig = {
     WindowWidth = 200, 
     WindowMaxHeight = 350,
     ItemHeight = 34,
-    Theme = "Default", -- [默认] 紫罗兰
-    UIVisible = true,
+    Theme = "Default", 
+    -- [关键修改 1] 将这里改为 false，默认不显示界面
+    UIVisible = false, 
     UseCorners = true, 
     UseStroke = true   
 }
@@ -489,7 +490,11 @@ function Library:CreateWindow(title, pos, isMain, isSub)
     local HeaderH = Library.Config.ItemHeight + 6
     local Main = Instance.new("Frame"); Main.Name = "Window_"..title
     Main.Parent = ScreenGui; Main.Position = pos; Main.Size = UDim2.new(0,Library.Config.WindowWidth,0,HeaderH); 
-    Main.BorderSizePixel = 0; Main.Visible = isOpen; Main.ZIndex = 10
+    Main.BorderSizePixel = 0; 
+    -- [关键修改 2] 主窗口创建时，强制遵循全局 UIVisible 配置
+    -- 这样即使逻辑上是"开启"的，物理上也是隐藏的，直到点击灵动岛触发动画
+    Main.Visible = isOpen and Library.Config.UIVisible; 
+    Main.ZIndex = 10
     RegisterObject(Main, "Window")
     RegisterStyle(Main, true, 10)
     
