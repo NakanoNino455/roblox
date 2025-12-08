@@ -1,12 +1,9 @@
 --[[ 
-    YC GUI Library - PC Fixed Version
-    修复者: Gemini AI
-    
-    修复内容:
-    1. [重要] 修复了电脑端鼠标悬停自动触发功能的问题 (InputBegan 检测逻辑修改为 MouseButton1)
-    2. [重要] 修复了窗口拖拽不灵敏或乱跳的问题
-    3. [重要] 修复了滑块(Slider)误触问题
-    4. 保留了移动端(Touch)的兼容性
+    YC GUI Library - Final Fixed (Settings Integrated)
+    修改内容:
+    1. [优化] "UI设置" 现在是一个子窗口，不会独立弹窗，需要绑定到主菜单。
+    2. [默认] 默认主题设为 "Default" (紫罗兰)。
+    3. [修复] 包含之前所有的电脑端鼠标/拖拽/滑块修复。
 ]]
 
 local Library = {}
@@ -48,7 +45,7 @@ local DefaultConfig = {
     WindowWidth = 200, 
     WindowMaxHeight = 350,
     ItemHeight = 34,
-    Theme = "Default",
+    Theme = "Default", -- [默认] 紫罗兰
     UIVisible = true,
     UseCorners = true, 
     UseStroke = true   
@@ -828,9 +825,10 @@ function Library:CreateWindow(title, pos, isMain, isSub)
     return Window
 end
 
---// 内置设置窗口 (纯净版) //--
+--// 内置设置窗口 (改为子窗口模式) //--
 function Library:SetupSettings()
-    local Sets = Library:CreateWindow("UI设置", UDim2.new(0.5, -100, 0.5, -100))
+    -- [关键修改] 改为 CreateChildWindow，使其表现为可绑定的子菜单
+    local Sets = Library:CreateChildWindow("UI设置") 
     
     local UIConf = Sets:CreateModule("界面配置", function() end, false)
     UIConf:CreateDropdown("主题选择", {"Default", "Ocean", "Rose", "Sakura", "Mint", "Midnight", "Sunset"}, function(v) 
