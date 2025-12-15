@@ -1,1416 +1,1135 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+--[[ 
 
-local Window = Rayfield:CreateWindow({
-   Name = "Cat-King Hub | By Cat King v2.6", -- 版本号微调以示区别
-   LoadingTitle = "Loading...",
-   LoadingSubtitle = "Naramo-Nuclear-Plant-V2",
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = "Cat-King Hub",
-      FileName = "CatKing_Configs"
-   },
-   KeySystem = false, 
-})
+    SCP Roleplay - Cat King v1.8 (Custom Config Edition)
 
--- 服务引用
+    UI Library: YC GUI
+
+    配置: 使用用户自定义的 Config 系统
+
+    保留: Team Check, Hitbox Physics/Face Fix, Aimbot Logic
+
+    修改: ESP 与 Name Tags 分离
+
+]]
+
+
+
+-- 1. 加载 UI 库
+
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/NakanoNino455/roblox/refs/heads/main/UI.lua"))() 
+
+Library.Config.UIVisible = false -- 启动隐藏
+
+
+
+-- 2. 创建主控
+
+local MainControl = Library:CreateMainControl("CatKing SCP v2.4")
+
+local MainWin = Library:CreateChildWindow("Main")
+
+local CombatWin = Library:CreateChildWindow("Aimbot")
+
+local MobileWin = Library:CreateChildWindow("Mobile Aim")
+
+local SCPWin = Library:CreateChildWindow("SCP")
+
+local MiscWin = Library:CreateChildWindow("Other")
+
+local ConfigWin = Library:CreateChildWindow("Config")
+
+
+
+-- 3. 绑定窗口
+
+MainControl:BindWindow("Main", true)
+
+MainControl:BindWindow("Aimbot", false)
+
+MainControl:BindWindow("Mobile Aim", false)
+
+MainControl:BindWindow("SCP", false)
+
+MainControl:BindWindow("Other", false)
+
+MainControl:BindWindow("Config", false)
+
+
+
+Library:SetupSettings()
+
+MainControl:BindWindow("UI Settings", false)
+
+
+
+--------------------------------------------------------------------------------
+
+-- [全局变量]
+
+--------------------------------------------------------------------------------
+
 local Players = game:GetService("Players")
+
 local RunService = game:GetService("RunService")
+
 local UserInputService = game:GetService("UserInputService")
-local Camera = workspace.CurrentCamera
-local Lighting = game:GetService("Lighting")
-local CoreGui = game:GetService("CoreGui")
-local TextChatService = game:GetService("TextChatService")
+
 local HttpService = game:GetService("HttpService")
+
 local LocalPlayer = Players.LocalPlayer
 
---------------------------------------------------------------------
--- [UI 系统: 锁定提示 & CatKing 功能列表]
---------------------------------------------------------------------
-if CoreGui:FindFirstChild("NaramoOverlay") then
-    CoreGui.NaramoOverlay:Destroy()
-end
+local Camera = workspace.CurrentCamera
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "NaramoOverlay"
-ScreenGui.Parent = CoreGui
-ScreenGui.ResetOnSpawn = false 
 
--- 1. 锁定提示文本 (LOCKED)
-local LockLabel = Instance.new("TextLabel")
-LockLabel.Name = "LockIndicator"
-LockLabel.Parent = ScreenGui
-LockLabel.BackgroundTransparency = 1
-LockLabel.Size = UDim2.new(0, 100, 0, 30)
-LockLabel.Font = Enum.Font.GothamBlack
-LockLabel.Text = "[ LOCKED ]"
-LockLabel.TextColor3 = Color3.fromRGB(255, 50, 50) 
-LockLabel.TextSize = 18
-LockLabel.TextStrokeTransparency = 0
-LockLabel.Visible = false
-LockLabel.Position = UDim2.new(0.5, 30, 0.5, 30)
 
--- 2. 功能列表框架
-local ListFrame = Instance.new("Frame")
-ListFrame.Name = "FeatureList"
-ListFrame.Parent = ScreenGui
-ListFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-ListFrame.BackgroundTransparency = 0.6
-ListFrame.BorderSizePixel = 0
-ListFrame.Position = UDim2.new(0.85, 0, 0.3, 0) 
-ListFrame.Size = UDim2.new(0, 180, 0, 50) 
-ListFrame.Visible = false
-ListFrame.Active = true
-ListFrame.Draggable = true 
+_G.WallCheckSetting = true
 
-local ListCorner = Instance.new("UICorner")
-ListCorner.CornerRadius = UDim.new(0, 6)
-ListCorner.Parent = ListFrame
+_G.WeaponCheckEnabled = false 
 
-local ListLayout = Instance.new("UIListLayout")
-ListLayout.Parent = ListFrame
-ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ListLayout.Padding = UDim.new(0, 2)
-ListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+_G.ESPActive = false 
 
-local ListPadding = Instance.new("UIPadding")
-ListPadding.Parent = ListFrame
-ListPadding.PaddingTop = UDim.new(0, 10)
-ListPadding.PaddingBottom = UDim.new(0, 10)
+_G.NameTagsActive = false -- [新增]
 
--- 功能状态追踪表
-local ActiveFeatures = {
-    Aimbot = false,
-    MobileAimbot = false,
-    ESP = false,
-    Tracers = false,
-    Noclip = false,
-    InfiniteJump = false,
-    FullBright = false,
-    InfiniteAmmo = false,
-    VehicleMod = false 
+_G.TeamCheckEnabled = false 
+
+_G.HitboxSize = 9 
+
+_G.HitboxTransparency = 10
+
+_G.HitboxActive = false 
+
+_G.HitboxTeamCheck = false 
+_G.SilentAimTeamSettings = {
+    ["Class-D"] = true,
+    ["Chaos Insurgency"] = true,
+    ["Scientific Department"] = true,
+    ["Security Department"] = true,
+    ["Intelligence Agency"] = true,
+    ["Mobile Task Force"] = true,
+    ["Rapid Response Team"] = true,
+    ["Medical Department"] = true,
+    ["Administrative Department"] = true,
+    ["Internal Security Department"] = true
 }
 
--- 更新列表函数
-local function UpdateFeatureList()
-    for _, child in pairs(ListFrame:GetChildren()) do
-        if child:IsA("TextLabel") then child:Destroy() end
-    end
 
-    local TitleLabel = Instance.new("TextLabel")
-    TitleLabel.Name = "MainTitle"
-    TitleLabel.Parent = ListFrame
-    TitleLabel.BackgroundTransparency = 1
-    TitleLabel.Size = UDim2.new(1, 0, 0, 35)
-    TitleLabel.Font = Enum.Font.FredokaOne 
-    TitleLabel.Text = "CatKing v3"
-    TitleLabel.TextSize = 26
-    TitleLabel.LayoutOrder = 0 
-    TitleLabel.TextStrokeTransparency = 0.8
-     
-    local Spacer = Instance.new("TextLabel")
-    Spacer.Parent = ListFrame
-    Spacer.Text = "----------------"
-    Spacer.BackgroundTransparency = 1
-    Spacer.Size = UDim2.new(1, 0, 0, 10)
-    Spacer.TextColor3 = Color3.fromRGB(100, 100, 100)
-    Spacer.LayoutOrder = 1
-    Spacer.TextSize = 10
 
-    local count = 0
-    for featureName, isEnabled in pairs(ActiveFeatures) do
-        if isEnabled then
-            local label = Instance.new("TextLabel")
-            label.Parent = ListFrame
-            label.BackgroundTransparency = 1
-            label.Size = UDim2.new(1, -20, 0, 22)
-            label.Font = Enum.Font.GothamBold
-            label.Text = string.upper(featureName)
-            label.TextXAlignment = Enum.TextXAlignment.Center
-            label.TextSize = 16
-            label.LayoutOrder = count + 2 
-            label.TextStrokeTransparency = 1
-            count = count + 1
-        end
-    end
-     
-    local totalHeight = 35 + 10 + (count * 24) + 20
-    ListFrame.Size = UDim2.new(0, 180, 0, totalHeight)
-end
+_G.MobileGlobal = { IsAimbotGuiOn = false, IsFOVOn = false, IsCrossOn = false, AimbotActive = false }
 
--- 全局彩虹特效 (修复版：强制更新颜色)
-task.spawn(function()
-    while task.wait(0.05) do 
-        local hue = tick() % 5 / 5
-        local color = Color3.fromHSV(hue, 1, 1)
 
-        -- 列表颜色更新
-        if ListFrame.Visible then
-            for _, child in pairs(ListFrame:GetChildren()) do
-                if child:IsA("TextLabel") then
-                    child.TextColor3 = color
-                    if child.Name == "MainTitle" then
-                        child.TextStrokeColor3 = Color3.fromHSV(hue, 0.5, 0.5)
-                    end
-                end
-            end
-        end
 
-        -- FOV圈颜色更新 (此处移除Visible判断，确保开启瞬间就有颜色)
-        FOVCircle.Color = color
-        
-        MobileFOVCircle.Color = color
-        MobileBtnFrame.BackgroundColor3 = color 
-    end
-end)
+_G.HeadLock = {
 
---------------------------------------------------------------------
--- [Mobile Movable Button Setup] - 修复触摸拖动
---------------------------------------------------------------------
-local MobileBtnFrame = Instance.new("Frame")
-MobileBtnFrame.Name = "MobileTriggerFrame"
-MobileBtnFrame.Parent = ScreenGui
-MobileBtnFrame.Size = UDim2.new(0, 60, 0, 60)
-MobileBtnFrame.Position = UDim2.new(0.8, 0, 0.6, 0)
-MobileBtnFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MobileBtnFrame.BackgroundTransparency = 0.5
-MobileBtnFrame.BorderSizePixel = 0
-MobileBtnFrame.Visible = false
-MobileBtnFrame.Active = true
+    FOVCircle = nil, Crosshair = nil,
 
-local MobileBtnCorner = Instance.new("UICorner")
-MobileBtnCorner.CornerRadius = UDim.new(1, 0)
-MobileBtnCorner.Parent = MobileBtnFrame
+    Settings = { FOV=400, MaxDistance=1000, PredictionStrength=0.2, Smoothness=3, WallCheck=true, ShowCrosshair=false, StickyLock=true, TeamCheck=false, LockMode="Instant lock" },
 
-local MobileBtn = Instance.new("TextButton")
-MobileBtn.Parent = MobileBtnFrame
-MobileBtn.Size = UDim2.new(1, 0, 1, 0)
-MobileBtn.BackgroundTransparency = 1
-MobileBtn.Text = "AIM"
-MobileBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-MobileBtn.Font = Enum.Font.GothamBlack
-MobileBtn.TextSize = 14
+    LockedTarget = nil, RenderConnection = nil
 
---------------------------------------------------------------------
--- [Mobile Button Drag System] - 新增触摸拖动支持
---------------------------------------------------------------------
-local MobileDragging = false
-local MobileDragInput = nil
-local MobileDragStart = nil
-local MobileStartPos = nil
-
-local function UpdateMobileDrag(input)
-    local delta = input.Position - MobileDragStart
-    MobileBtnFrame.Position = UDim2.new(
-        MobileStartPos.X.Scale, 
-        MobileStartPos.X.Offset + delta.X, 
-        MobileStartPos.Y.Scale, 
-        MobileStartPos.Y.Offset + delta.Y
-    )
-end
-
-MobileBtnFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        MobileDragging = true
-        MobileDragStart = input.Position
-        MobileStartPos = MobileBtnFrame.Position
-        
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                MobileDragging = false
-            end
-        end)
-    end
-end)
-
-MobileBtnFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        MobileDragInput = input
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input == MobileDragInput and MobileDragging then
-        UpdateMobileDrag(input)
-    end
-end)
-
---------------------------------------------------------------------
--- [核心变量]
---------------------------------------------------------------------
-_G.InfiniteAmmoEnabled = false
-_G.VehicleModEnabled = false
-_G.VehicleSpeedMult = 1.5
-_G.VehicleTurnSpeed = 0.02
-
--- [UPDATED] 添加了偏移量变量
-local MobileSettings = {
-    Enabled = false,
-    Active = false,
-    FOV = 120,
-    Target = nil,
-    OffsetX = 0, -- 新增 X轴偏移
-    OffsetY = 0  -- 新增 Y轴偏移
 }
 
-local AimbotSettings = {
-    Enabled = false,
-    BypassCheck = false, 
-    FOV = 150,
-    WallCheck = true, 
-    LockedTarget = nil
+
+
+local weaponsList = {
+
+    "M4", "M16A4", "SMG25", "BP-556", "M416", "SW-762", "KV-12", "AUG A3", 
+
+    "ACR", "BR-762", "ARX-200", "AK-47", "AKS-74U", "Laser Rifle", "M110",
+
+    "SMG46", "SMG416", "P DW-28", "Honey Badger",
+
+    "UMP-45", "MP5", "Kriss Vector", "EVO 3 Micro", "SMG9X", "P90", "MP7",
+
+    "AAC Honey Badger", "APC556 PDW",
+
+    "Spas - 12", "AA-12", "Burning Fang",
+
+    "XM250", "Minigun",
+
+    "M9", "Pistol", "Golden Hawk", "Laser Pistol"
+
 }
 
-local VisualSettings = {
-    Enabled = false,
-    ShowTracers = false,
-    ShowHealth = false,
-    ShowDistance = false,
-    RenderDistance = 2000, 
-    ESP_Storage = {},
-    TeamCache = {}
-}
 
-_G.InfiniteJumpEnabled = false
-_G.NoclipConnection = nil
 
-local WeaponKeywords = {
-    "BR", "18", "M19", 
-    "M4", "AK", "P90", "MP5", "Shotgun", "Pistol", "Glock", 
-    "Rifle", "Sniper", "SMG", "Gun", "Blaster", "Deagle", 
-    "USP", "Scar", "Vector", "Awp", "M249", "P250", "HK",
-    "Weapon", "Firearm"
-}
+-- [阵营检测]
 
--- 创建标签页
-local MainTab = Window:CreateTab("Main", nil)
-local AimbotTab = Window:CreateTab("Aimbot", nil)
-local VisualTab = Window:CreateTab("Visual", nil)
-local VehicleTab = Window:CreateTab("Vehicle", nil)
-local OtherTab = Window:CreateTab("Other", nil)
+local VillainTeams = { ["Class-D"]=true, ["Class - D"]=true, ["Chaos Insurgency"]=true, ["The Chaos Insurgency"]=true }
 
---------------------------------------------------------------------
--- [Main Tab]
---------------------------------------------------------------------
-local MainSection = MainTab:CreateSection("Main")
+local HeroTeams = { ["Scientific Department"]=true, ["Security Department"]=true, ["Mobile Task Force"]=true, ["Intelligence Agency"]=true, ["Rapid Response Team"]=true, ["Medical Department"]=true, ["Administrative Department"]=true, ["Internal Security Department"]=true }
 
-MainTab:CreateToggle({
-   Name = "Infinite Jump",
-   CurrentValue = false,
-   Flag = "InfJump",
-   Callback = function(Value)
-       _G.InfiniteJumpEnabled = Value
-       ActiveFeatures.InfiniteJump = Value
-       UpdateFeatureList()
-   end,
-})
 
-game:GetService("UserInputService").JumpRequest:Connect(function()
-    if _G.InfiniteJumpEnabled then
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-            LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
-        end
-    end
-end)
 
-MainTab:CreateToggle({
-   Name = "Noclip",
-   CurrentValue = false,
-   Flag = "Noclip",
-   Callback = function(Value)
-       ActiveFeatures.Noclip = Value
-       UpdateFeatureList()
-       
-       if Value then
-           _G.NoclipConnection = RunService.Stepped:Connect(function()
-               if LocalPlayer.Character then
-                   for _, v in pairs(LocalPlayer.Character:GetChildren()) do
-                        if v:IsA("BasePart") and v.CanCollide == true then
-                            v.CanCollide = false
-                        end
-                   end
-               end
-           end)
-       else
-           if _G.NoclipConnection then
-               _G.NoclipConnection:Disconnect()
-               _G.NoclipConnection = nil
-           end
-       end
-   end,
-})
+local function isEnemy(player)
 
-MainTab:CreateToggle({
-   Name = "Show Chat",
-   CurrentValue = false,
-   Flag = "ForceChat",
-   Callback = function(Value)
-        local chatWindowConfig = TextChatService:FindFirstChild("ChatWindowConfiguration")
-        if chatWindowConfig then
-            chatWindowConfig.Enabled = Value
-        end
-        pcall(function()
-            game:GetService("StarterGui"):SetCoreGuiEnabled(Enum.CoreGuiType.Chat, Value)
-        end)
-   end,
-})
+    if not _G.TeamCheckEnabled then return true end
 
-local EnvSection = MainTab:CreateSection("Environment settings")
+    if not player or not player.Team or not LocalPlayer.Team then return true end
 
-MainTab:CreateToggle({
-   Name = "Full Bright",
-   CurrentValue = false,
-   Flag = "FullBright",
-   Callback = function(Value)
-       ActiveFeatures.FullBright = Value
-       UpdateFeatureList()
+    local myTeam = LocalPlayer.Team.Name; local theirTeam = player.Team.Name
 
-       if Value then
-           _G.OldBrightness = Lighting.Brightness
-           _G.OldAmbient = Lighting.Ambient
-           _G.OldGlobalShadows = Lighting.GlobalShadows
-           Lighting.Brightness = 2
-           Lighting.Ambient = Color3.fromRGB(255, 255, 255)
-           Lighting.GlobalShadows = false
-       else
-           Lighting.Brightness = _G.OldBrightness or 1
-           Lighting.Ambient = _G.OldAmbient or Color3.fromRGB(0,0,0)
-           Lighting.GlobalShadows = _G.OldGlobalShadows or true
-       end
-   end,
-})
+    if myTeam == theirTeam then return false end
 
---------------------------------------------------------------------
--- [Aimbot Tab]
---------------------------------------------------------------------
-local AimbotSection = AimbotTab:CreateSection("PC Aimbot")
+    local amIVillain = VillainTeams[myTeam]; local amIHero = HeroTeams[myTeam]
 
-local FOVCircle = Drawing.new("Circle")
-FOVCircle.Thickness = 2
-FOVCircle.NumSides = 64
-FOVCircle.Filled = false
-FOVCircle.Transparency = 1
-FOVCircle.Visible = false
-FOVCircle.Radius = AimbotSettings.FOV
-FOVCircle.Color = Color3.fromRGB(255, 255, 255)
+    local areTheyVillain = VillainTeams[theirTeam]; local areTheyHero = HeroTeams[theirTeam]
 
--- Mobile Visuals
-local MobileFOVCircle = Drawing.new("Circle")
-MobileFOVCircle.Thickness = 3
-MobileFOVCircle.NumSides = 32
-MobileFOVCircle.Filled = false
-MobileFOVCircle.Transparency = 1
-MobileFOVCircle.Visible = false
-MobileFOVCircle.Radius = MobileSettings.FOV
-MobileFOVCircle.Color = Color3.fromRGB(255, 255, 255)
+    if amIVillain and areTheyHero then return true end
 
-local MobileCrosshairH = Drawing.new("Line")
-MobileCrosshairH.Thickness = 2
-MobileCrosshairH.Color = Color3.fromRGB(255, 0, 0)
-MobileCrosshairH.Visible = false
+    if amIHero and areTheyVillain then return true end
 
-local MobileCrosshairV = Drawing.new("Line")
-MobileCrosshairV.Thickness = 2
-MobileCrosshairV.Color = Color3.fromRGB(255, 0, 0)
-MobileCrosshairV.Visible = false
-
--- (注：彩虹循环已移至上方，并移除了 Visible 检查)
-
-local function IsHoldingWeapon()
-    if AimbotSettings.BypassCheck then return true end
-    local character = LocalPlayer.Character
-    if not character then return false end
-    local tool = character:FindFirstChildOfClass("Tool")
-    if not tool then return false end
-    local toolName = tool.Name:lower() 
-    for _, keyword in pairs(WeaponKeywords) do
-        if string.find(toolName, keyword:lower()) then return true end
-    end
     return false
+
 end
 
-local function IsVisible(targetPart)
-    if not AimbotSettings.WallCheck then return true end
+
+
+-- [Wall Check]
+
+local function checkVisible(part)
+
+    if not _G.HeadLock.Settings.WallCheck then return true end
+
     local origin = Camera.CFrame.Position
-    local direction = targetPart.Position - origin
-    local raycastParams = RaycastParams.new()
-    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character, targetPart.Parent}
-    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
-    raycastParams.IgnoreWater = true
-    local result = workspace:Raycast(origin, direction, raycastParams)
+
+    local direction = part.Position - origin
+
+    local params = RaycastParams.new()
+
+    params.FilterType = Enum.RaycastFilterType.Exclude
+
+    params.FilterDescendantsInstances = {LocalPlayer.Character, part.Parent, Camera, workspace:FindFirstChild("RaycastIgnore")}
+
+    params.IgnoreWater = true
+
+    local result = workspace:Raycast(origin, direction, params)
+
     return result == nil
+
 end
 
-local function GetClosestPlayer(fovLimit)
-    local closestPlayer = nil
-    local shortestDistance = math.huge
-    
-    -- [UPDATED] 计算中心点：如果是手机模式，则应用偏移量
-    local centerScreen
-    if MobileSettings.Active then
-        centerScreen = Vector2.new((Camera.ViewportSize.X / 2) + MobileSettings.OffsetX, (Camera.ViewportSize.Y / 2) + MobileSettings.OffsetY)
-    else
-        centerScreen = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-    end
-    
-    local checkFOV = fovLimit or AimbotSettings.FOV
 
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") and player.Character:FindFirstChild("Humanoid") then
-            if player.Character.Humanoid.Health <= 0 then continue end
-            if LocalPlayer.Team and player.Team and LocalPlayer.Team == player.Team then continue end
 
-            local head = player.Character.Head
-            local vector, onScreen = Camera:WorldToViewportPoint(head.Position)
+local function hasWeapon()
 
-            if onScreen then
-                local distance = (Vector2.new(vector.X, vector.Y) - centerScreen).Magnitude
-                if distance < shortestDistance and distance <= checkFOV then
-                    if IsVisible(head) then
-                        shortestDistance = distance
-                        closestPlayer = player
-                    end
+    if not _G.WeaponCheckEnabled then return true end
+
+    if not LocalPlayer.Character then return false end
+
+    local t = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+
+    if not t then return false end
+
+    for _,n in ipairs(weaponsList) do if t.Name==n or string.find(t.Name,n) then return true end end
+
+    return false
+
+end
+
+
+
+local function getBestTarget()
+
+    local bT, bS = nil, math.huge
+
+    local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+
+    for _, p in ipairs(Players:GetPlayers()) do
+
+        if p~=LocalPlayer and p.Character and isEnemy(p) then
+
+            local head = p.Character:FindFirstChild("Head")
+
+            local hum = p.Character:FindFirstChild("Humanoid")
+
+            if head and hum and hum.Health > 0 then
+
+                local sPos, onS = Camera:WorldToViewportPoint(head.Position)
+
+                if onS and checkVisible(head) then
+
+                    local d2d = (Vector2.new(sPos.X, sPos.Y) - center).Magnitude
+
+                    if d2d <= _G.HeadLock.Settings.FOV and d2d < bS then bS = d2d; bT = {Head=head, Player=p, Character=p.Character} end
+
                 end
+
             end
+
         end
+
     end
-    return closestPlayer
+
+    return bT
+
 end
 
-AimbotTab:CreateToggle({
-   Name = "Aimbot (PC Right Click)",
-   CurrentValue = false,
-   Flag = "AimbotEnabled",
-   Callback = function(Value)
-       AimbotSettings.Enabled = Value
-       ActiveFeatures.Aimbot = Value
-       UpdateFeatureList()
-   end,
-})
 
-AimbotTab:CreateToggle({
-   Name = "⚠️Always Aimbot (No Gun Check)",
-   CurrentValue = false,
-   Flag = "BypassCheck",
-   Callback = function(Value)
-       AimbotSettings.BypassCheck = Value
-   end,
-})
 
-AimbotTab:CreateToggle({
-   Name = "Wall Check",
-   CurrentValue = true,
-   Flag = "WallCheck",
-   Callback = function(Value)
-       AimbotSettings.WallCheck = Value
-   end,
-})
+-- ==================================================================
 
-AimbotTab:CreateSlider({
-   Name = "FOV",
-   Range = {50, 800},
-   Increment = 10,
-   Suffix = "px",
-   CurrentValue = 150,
-   Flag = "FOVRadius",
-   Callback = function(Value)
-       AimbotSettings.FOV = Value
-       FOVCircle.Radius = Value
-   end,
-})
+-- [UI 内容]
 
--- [Mobile Aimbot Section]
-local MobileSection = AimbotTab:CreateSection("Mobile Aimbot")
+-- ==================================================================
 
-AimbotTab:CreateToggle({
-   Name = "Enable Mobile Aimbot Button",
-   CurrentValue = false,
-   Flag = "MobileAimbotEnabled",
-   Callback = function(Value)
-       MobileSettings.Enabled = Value
-       MobileBtnFrame.Visible = Value
-       ActiveFeatures.MobileAimbot = Value
-       UpdateFeatureList()
-       
-       if not Value then
-           MobileSettings.Active = false
-           MobileBtn.Text = "AIM"
-           MobileFOVCircle.Visible = false
-           MobileCrosshairH.Visible = false
-           MobileCrosshairV.Visible = false
-       end
-   end,
-})
 
-AimbotTab:CreateSlider({
-   Name = "Mobile FOV",
-   Range = {50, 500},
-   Increment = 10,
-   Suffix = "px",
-   CurrentValue = 120,
-   Callback = function(Value)
-       MobileSettings.FOV = Value
-       MobileFOVCircle.Radius = Value
-   end,
-})
 
--- [新增] 准心位置 X 调节
-AimbotTab:CreateSlider({
-   Name = "Crosshair Pos X (Left/Right)",
-   Range = {-500, 500},
-   Increment = 1,
-   Suffix = "px",
-   CurrentValue = 0,
-   Callback = function(Value)
-       MobileSettings.OffsetX = Value
-   end,
-})
+-- Main
 
--- [新增] 准心位置 Y 调节
-AimbotTab:CreateSlider({
-   Name = "Crosshair Pos Y (Up/Down)",
-   Range = {-500, 500},
-   Increment = 1,
-   Suffix = "px",
-   CurrentValue = 0,
-   Callback = function(Value)
-       MobileSettings.OffsetY = Value
-   end,
-})
+local NameHideConnection = nil 
 
-MobileBtn.MouseButton1Click:Connect(function()
-    MobileSettings.Active = not MobileSettings.Active
-    if MobileSettings.Active then
-        MobileBtn.Text = "ON"
-    else
-        MobileBtn.Text = "AIM"
-    end
+local function forceHideName()
+
+    local char = LocalPlayer.Character; if not char then return end
+
+    local hum = char:FindFirstChild("Humanoid"); local head = char:FindFirstChild("Head")
+
+    if hum then hum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None; hum.HealthDisplayType=Enum.HumanoidHealthDisplayType.AlwaysOff; hum.NameOcclusion=Enum.NameOcclusion.NoOcclusion; hum.NameDisplayDistance=0 end
+
+    if head then for _,c in pairs(head:GetChildren()) do if c:IsA("BillboardGui") or c:IsA("SurfaceGui") then c.Enabled=false end end end
+
+end
+
+MainWin:CreateModule("Hidden Name", function(v)
+
+    if v then if NameHideConnection then NameHideConnection:Disconnect() end NameHideConnection=RunService.RenderStepped:Connect(forceHideName)
+
+    else if NameHideConnection then NameHideConnection:Disconnect(); NameHideConnection=nil end; local c=LocalPlayer.Character; if c and c:FindFirstChild("Humanoid") then c.Humanoid.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.Viewer; c.Humanoid.HealthDisplayType=Enum.HumanoidHealthDisplayType.DisplayWhenDamaged; c.Humanoid.NameDisplayDistance=100 end; if c and c:FindFirstChild("Head") then for _,o in pairs(c.Head:GetChildren()) do if o:IsA("BillboardGui") or o:IsA("SurfaceGui") then o.Enabled=true end end end end
+
 end)
 
 
-local WeaponModsSection = AimbotTab:CreateSection("Weapon Mods")
 
-AimbotTab:CreateToggle({
-    Name = "Infinite Ammo",
-    CurrentValue = false,
-    Flag = "InfiniteAmmo",
-    Callback = function(Value)
-        _G.InfiniteAmmoEnabled = Value
-        ActiveFeatures.InfiniteAmmo = Value
-        UpdateFeatureList()
-    end,
-})
+-- [分离后的 ESP 和 Name Tags]
 
-local DebugLabel = AimbotTab:CreateLabel("Debugging information: Waiting for Checking...")
+local highlights = {}
 
--- Aimbot Loop
-RunService.RenderStepped:Connect(function()
-    local hasWeapon = IsHoldingWeapon()
-    local currentToolName = "No/Empty hands"
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool") then
-        currentToolName = LocalPlayer.Character:FindFirstChildOfClass("Tool").Name
-    end
+local espLabels = {}
 
-    -- Debug Info
-    if AimbotSettings.BypassCheck then
-          DebugLabel:Set("Status: ⚠️ Always Aimbot (Using: " .. currentToolName .. ")")
-    elseif hasWeapon then
-          DebugLabel:Set("Status: ✅ Match successful (Using: " .. currentToolName .. ")")
-    else
-          DebugLabel:Set("Status: ❌ No weapon (Using: " .. currentToolName .. ")")
-    end
 
-    -- [UPDATED] 基础中心点
-    local baseCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 
-    -- MOBILE AIMBOT LOGIC
-    if MobileSettings.Enabled and MobileSettings.Active then
-        -- [UPDATED] 应用偏移量到 Mobile Center
-        local mobileCenter = Vector2.new(baseCenter.X + MobileSettings.OffsetX, baseCenter.Y + MobileSettings.OffsetY)
+-- 颜色定义 (共用)
 
-        MobileFOVCircle.Visible = true
-        MobileFOVCircle.Position = mobileCenter
-        
-        MobileCrosshairH.Visible = true
-        MobileCrosshairH.From = Vector2.new(mobileCenter.X - 10, mobileCenter.Y)
-        MobileCrosshairH.To = Vector2.new(mobileCenter.X + 10, mobileCenter.Y)
-        
-        MobileCrosshairV.Visible = true
-        MobileCrosshairV.From = Vector2.new(mobileCenter.X, mobileCenter.Y - 10)
-        MobileCrosshairV.To = Vector2.new(mobileCenter.X, mobileCenter.Y + 10)
+local TEAM_COLORS = {["Class-D"]=Color3.fromRGB(255,165,0), ["Class - D"]=Color3.fromRGB(255,165,0), ["Scientific Department"]=Color3.fromRGB(0,0,255), ["Security Department"]=Color3.fromRGB(255,255,255), ["Mobile Task Force"]=Color3.fromRGB(0,0,139), ["Intelligence Agency"]=Color3.fromRGB(255,0,0), ["Rapid Response Team"]=Color3.fromRGB(255,50,50), ["Chaos Insurgency"]=Color3.fromRGB(0,0,0), ["Medical Department"]=Color3.fromRGB(0,191,255), ["Administrative Department"]=Color3.fromRGB(0,255,0), ["Internal Security Department"]=Color3.fromRGB(139,0,0), ["Default"]=Color3.fromRGB(200,200,200)}
 
-        MobileSettings.Target = GetClosestPlayer(MobileSettings.FOV)
-        if MobileSettings.Target and MobileSettings.Target.Character and MobileSettings.Target.Character:FindFirstChild("Head") then
-            local targetHead = MobileSettings.Target.Character.Head
-            local currentCFrame = Camera.CFrame
-            local targetCFrame = CFrame.lookAt(currentCFrame.Position, targetHead.Position)
-            Camera.CFrame = currentCFrame:Lerp(targetCFrame, 0.5)
-            
-            LockLabel.Visible = true
-            LockLabel.Text = "[ M-LOCKED ]"
-        else
-            LockLabel.Visible = false
-        end
-    else
-        MobileFOVCircle.Visible = false
-        MobileCrosshairH.Visible = false
-        MobileCrosshairV.Visible = false
-        if not AimbotSettings.Enabled then LockLabel.Visible = false end
-    end
+local function getCol(p) return (p and p.Team and TEAM_COLORS[p.Team.Name]) or (p and p.Team and p.Team.TeamColor.Color) or TEAM_COLORS["Default"] end
 
-    -- PC AIMBOT LOGIC
-    if AimbotSettings.Enabled and hasWeapon then
-        FOVCircle.Visible = true
-        FOVCircle.Position = baseCenter -- PC Aimbot 保持在屏幕正中心
-    else
-        FOVCircle.Visible = false
-        AimbotSettings.LockedTarget = nil
-        if not MobileSettings.Active then LockLabel.Visible = false end
-        if not MobileSettings.Enabled then return end
-    end
 
-    local isTriggerPressed = UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)
 
-    if isTriggerPressed and AimbotSettings.Enabled then
-        if not AimbotSettings.LockedTarget 
-           or not AimbotSettings.LockedTarget.Character 
-           or not AimbotSettings.LockedTarget.Character:FindFirstChild("Humanoid")
-           or AimbotSettings.LockedTarget.Character.Humanoid.Health <= 0 then
-            
-            AimbotSettings.LockedTarget = GetClosestPlayer(AimbotSettings.FOV)
-        end
+-- 1. ESP (仅高亮)
 
-        if AimbotSettings.LockedTarget and AimbotSettings.LockedTarget.Character and AimbotSettings.LockedTarget.Character:FindFirstChild("Head") then
-            local targetHead = AimbotSettings.LockedTarget.Character.Head
-            
-            if IsVisible(targetHead) then
-                local currentCFrame = Camera.CFrame
-                local targetCFrame = CFrame.lookAt(currentCFrame.Position, targetHead.Position)
-                Camera.CFrame = currentCFrame:Lerp(targetCFrame, 0.5)
-                LockLabel.Visible = true
-                LockLabel.Text = "[ LOCKED ]"
-            else
-                LockLabel.Visible = false
-                if AimbotSettings.WallCheck then
-                    AimbotSettings.LockedTarget = nil
-                end
-            end
-        else
-            AimbotSettings.LockedTarget = nil
-            if not MobileSettings.Active then LockLabel.Visible = false end
-        end
-    elseif not MobileSettings.Active then
-        AimbotSettings.LockedTarget = nil
-        LockLabel.Visible = false
-    end
-end)
+-- 1. ESP (Refactored to Event-Based)
+local ESPConnections = {}
 
---------------------------------------------------------------------
--- [Visual Tab] - 修复ESP系统
---------------------------------------------------------------------
-local VisualSection = VisualTab:CreateSection("ESP")
-
--- 清理ESP函数（优化版）
-local function ClearVisual(player)
-    if VisualSettings.ESP_Storage[player] then
-        pcall(function()
-            if VisualSettings.ESP_Storage[player].Tracer then
-                VisualSettings.ESP_Storage[player].Tracer.Visible = false
-                VisualSettings.ESP_Storage[player].Tracer:Remove()
-            end
-        end)
-        pcall(function()
-            if VisualSettings.ESP_Storage[player].Highlight then
-                VisualSettings.ESP_Storage[player].Highlight:Destroy()
-            end
-        end)
-        pcall(function()
-            if VisualSettings.ESP_Storage[player].Billboard then
-                VisualSettings.ESP_Storage[player].Billboard:Destroy()
-            end
-        end)
-        VisualSettings.ESP_Storage[player] = nil
-        VisualSettings.TeamCache[player] = nil
-    end
-end
-
--- 获取玩家颜色（带缓存检测）
-local function GetPlayerColor(player)
-    if player.TeamColor then return player.TeamColor.Color end
-    if player.Team and player.Team.TeamColor then return player.Team.TeamColor.Color end
-    return Color3.fromRGB(255, 255, 255)
-end
-
--- 获取玩家当前队伍标识
-local function GetTeamIdentifier(player)
-    if player.Team then
-        return player.Team.Name
-    elseif player.TeamColor then
-        return tostring(player.TeamColor)
-    end
-    return "NoTeam"
-end
-
--- 创建ESP函数（新增）
-local function CreateESP(player)
+local function AddESP(player)
     if player == LocalPlayer then return end
-    if VisualSettings.ESP_Storage[player] then return end
     
-    VisualSettings.ESP_Storage[player] = {
-        Tracer = Drawing.new("Line"),
-        Highlight = Instance.new("Highlight"),
-        Billboard = Instance.new("BillboardGui"),
-        NameLabel = Instance.new("TextLabel"),
-        InfoLabel = Instance.new("TextLabel")
-    }
-    
-    local hl = VisualSettings.ESP_Storage[player].Highlight
-    hl.Name = "RayfieldHighlight"
-    hl.FillTransparency = 0.5
-    hl.OutlineTransparency = 0
-    
-    local bg = VisualSettings.ESP_Storage[player].Billboard
-    bg.Name = "RayfieldBillboard"
-    bg.Size = UDim2.new(0, 200, 0, 60)
-    bg.StudsOffset = Vector3.new(0, 3, 0)
-    bg.AlwaysOnTop = true
-    
-    local nameLbl = VisualSettings.ESP_Storage[player].NameLabel
-    nameLbl.Parent = bg
-    nameLbl.Size = UDim2.new(1, 0, 0, 20)
-    nameLbl.Position = UDim2.new(0,0,0,0)
-    nameLbl.BackgroundTransparency = 1
-    nameLbl.TextStrokeTransparency = 0.5
-    nameLbl.TextSize = 14
-    nameLbl.Font = Enum.Font.SourceSansBold
-    
-    local infoLbl = VisualSettings.ESP_Storage[player].InfoLabel
-    infoLbl.Parent = bg
-    infoLbl.Size = UDim2.new(1, 0, 0, 30)
-    infoLbl.Position = UDim2.new(0,0,0.4,0)
-    infoLbl.BackgroundTransparency = 1
-    infoLbl.TextStrokeTransparency = 0.5
-    infoLbl.TextSize = 12
-    infoLbl.Font = Enum.Font.SourceSans
-    infoLbl.TextColor3 = Color3.new(1,1,1)
-    
-    -- 缓存当前队伍
-    VisualSettings.TeamCache[player] = GetTeamIdentifier(player)
+    local function ApplyHighlight(char)
+        if not char then return end
+        -- Avoid duplicates
+        if highlights[char] then highlights[char]:Destroy() end
+
+        task.spawn(function()
+            local head = char:WaitForChild("Head", 10)
+            if not head then return end
+            if not _G.ESPActive then return end -- Double check
+
+            local h = Instance.new("Highlight", char)
+            h.FillColor = getCol(player)
+            h.OutlineColor = Color3.new(1,1,1)
+            h.FillTransparency = 0.6
+            h.OutlineTransparency = 0.2
+            h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            highlights[char] = h
+        end)
+    end
+
+    if player.Character then ApplyHighlight(player.Character) end
+    -- Store connection per player to disconnect cleanly later
+    ESPConnections[player] = player.CharacterAdded:Connect(ApplyHighlight)
 end
 
--- 刷新单个玩家ESP（用于队伍变化）
-local function RefreshPlayerESP(player)
-    ClearVisual(player)
-    if VisualSettings.Enabled then
-        task.defer(function()
-            CreateESP(player)
-        end)
+local function RemoveESP(player)
+    if ESPConnections[player] then
+        ESPConnections[player]:Disconnect()
+        ESPConnections[player] = nil
+    end
+    if player.Character and highlights[player.Character] then
+        highlights[player.Character]:Destroy()
+        highlights[player.Character] = nil
     end
 end
 
-VisualTab:CreateToggle({
-   Name = "ESP",
-   CurrentValue = false,
-   Flag = "ESPEnabled",
-   Callback = function(Value)
-       VisualSettings.Enabled = Value
-       ActiveFeatures.ESP = Value
-       UpdateFeatureList()
-    
-       if Value then
-           -- 立即为所有现有玩家创建ESP
-           for _, player in pairs(Players:GetPlayers()) do
-               if player ~= LocalPlayer then
-                   CreateESP(player)
-               end
-           end
-       else
-           for _, player in pairs(Players:GetPlayers()) do
-               ClearVisual(player)
-           end
-       end
-   end,
-})
-
-local VisualDetailSection = VisualTab:CreateSection("Show")
-
-VisualTab:CreateToggle({
-   Name = "Tracers",
-   CurrentValue = false,
-   Flag = "ShowTracers",
-   Callback = function(Value)
-       VisualSettings.ShowTracers = Value
-       ActiveFeatures.Tracers = Value
-       UpdateFeatureList()
-   end,
-})
-
-VisualTab:CreateToggle({
-   Name = "Health",
-   CurrentValue = false,
-   Flag = "ShowHealth",
-   Callback = function(Value)
-       VisualSettings.ShowHealth = Value
-   end,
-})
-
-VisualTab:CreateToggle({
-   Name = "Distance",
-   CurrentValue = false,
-   Flag = "ShowDistance",
-   Callback = function(Value)
-       VisualSettings.ShowDistance = Value
-   end,
-})
-
---------------------------------------------------------------------
--- [ESP事件处理] - 新增：处理新玩家加入
---------------------------------------------------------------------
-Players.PlayerAdded:Connect(function(player)
-    if VisualSettings.Enabled then
-        task.defer(function()
-            CreateESP(player)
-        end)
-    end
-     
-    -- 监听角色加载
-    player.CharacterAdded:Connect(function(char)
-        if VisualSettings.Enabled and VisualSettings.ESP_Storage[player] then
-            task.defer(function()
-                local espObj = VisualSettings.ESP_Storage[player]
-                if espObj and espObj.Highlight then
-                    espObj.Highlight.Parent = char
-                end
-                if espObj and espObj.Billboard and char:FindFirstChild("Head") then
-                    espObj.Billboard.Adornee = char.Head
-                    espObj.Billboard.Parent = char
-                end
-            end)
+MainWin:CreateModule("ESP", function(Value)
+    _G.ESPActive = Value
+    if Value then
+        -- Apply to existing
+        for _, p in ipairs(Players:GetPlayers()) do
+            AddESP(p)
         end
-    end)
+        -- Listen for new
+        ESPConnections["PlayerAdded"] = Players.PlayerAdded:Connect(AddESP)
+        ESPConnections["PlayerRemoving"] = Players.PlayerRemoving:Connect(RemoveESP)
+    else
+        -- Clean up connections
+        if ESPConnections["PlayerAdded"] then ESPConnections["PlayerAdded"]:Disconnect() end
+        if ESPConnections["PlayerRemoving"] then ESPConnections["PlayerRemoving"]:Disconnect() end
+        for p, conn in pairs(ESPConnections) do
+            if typeof(p) == "Instance" and p:IsA("Player") then
+                conn:Disconnect()
+            end
+        end
+        table.clear(ESPConnections)
+
+        -- Clean up highlights
+        for char, h in pairs(highlights) do
+            if h then h:Destroy() end
+        end
+        table.clear(highlights)
+    end
 end)
 
--- 为现有玩家添加角色监听
-for _, player in pairs(Players:GetPlayers()) do
-    if player ~= LocalPlayer then
-        player.CharacterAdded:Connect(function(char)
-            if VisualSettings.Enabled and VisualSettings.ESP_Storage[player] then
-                task.defer(function()
-                    local espObj = VisualSettings.ESP_Storage[player]
-                    if espObj and espObj.Highlight then
-                        espObj.Highlight.Parent = char
-                    end
-                    if espObj and espObj.Billboard and char:FindFirstChild("Head") then
-                        espObj.Billboard.Adornee = char.Head
-                        espObj.Billboard.Parent = char
-                    end
-                end)
-            end
+
+
+-- 2. Name Tags (仅名字显示)
+
+-- 2. Name Tags (Refactored to Event-Based)
+local NameTagConnections = {}
+
+local function AddNameTag(player)
+    if player == LocalPlayer then return end
+
+    local function ApplyTag(char)
+        if not char then return end
+        if espLabels[char] then espLabels[char]:Destroy() end
+
+        task.spawn(function()
+            local head = char:WaitForChild("Head", 10)
+            if not head then return end
+            if not _G.NameTagsActive then return end
+
+            local b = Instance.new("BillboardGui", char)
+            b.Name = "NameESP"
+            b.AlwaysOnTop = true
+            b.Size = UDim2.new(0,100,0,20)
+            b.StudsOffset = Vector3.new(0,2.5,0)
+            b.MaxDistance = 2000
+            b.Adornee = head
+
+            local l = Instance.new("TextLabel", b)
+            l.Size = UDim2.new(1,0,1,0)
+            l.BackgroundTransparency = 1
+            l.Text = player.Name
+            l.TextColor3 = getCol(player)
+            l.TextScaled = true
+            l.Font = Enum.Font.SourceSansBold
+            l.TextStrokeTransparency = 0.5
+
+            espLabels[char] = b
+            l.Parent = b
+            b.Parent = char
         end)
+    end
+
+    if player.Character then ApplyTag(player.Character) end
+    NameTagConnections[player] = player.CharacterAdded:Connect(ApplyTag)
+end
+
+local function RemoveNameTag(player)
+    if NameTagConnections[player] then
+        NameTagConnections[player]:Disconnect()
+        NameTagConnections[player] = nil
+    end
+    if player.Character and espLabels[player.Character] then
+        espLabels[player.Character]:Destroy()
+        espLabels[player.Character] = nil
     end
 end
 
-Players.PlayerRemoving:Connect(function(player)
-    ClearVisual(player)
+MainWin:CreateModule("Name Tags", function(Value)
+    _G.NameTagsActive = Value
+    if Value then
+        for _, p in ipairs(Players:GetPlayers()) do
+            AddNameTag(p)
+        end
+        NameTagConnections["PlayerAdded"] = Players.PlayerAdded:Connect(AddNameTag)
+        NameTagConnections["PlayerRemoving"] = Players.PlayerRemoving:Connect(RemoveNameTag)
+    else
+        if NameTagConnections["PlayerAdded"] then NameTagConnections["PlayerAdded"]:Disconnect() end
+        if NameTagConnections["PlayerRemoving"] then NameTagConnections["PlayerRemoving"]:Disconnect() end
+        for p, conn in pairs(NameTagConnections) do
+            if typeof(p) == "Instance" and p:IsA("Player") then
+                conn:Disconnect()
+            end
+        end
+        table.clear(NameTagConnections)
+
+        for char, v in pairs(espLabels) do
+            if v then v:Destroy() end
+        end
+        table.clear(espLabels)
+    end
 end)
 
--- 队伍变化检测循环（低频）
-task.spawn(function()
-    while task.wait(1) do
-        if VisualSettings.Enabled then
-            for player, _ in pairs(VisualSettings.ESP_Storage) do
-                if player and player.Parent then
-                    local currentTeam = GetTeamIdentifier(player)
-                    if VisualSettings.TeamCache[player] ~= currentTeam then
-                        -- 队伍发生变化，刷新ESP颜色
-                        VisualSettings.TeamCache[player] = currentTeam
-                        if VisualSettings.ESP_Storage[player] then
-                            local color = GetPlayerColor(player)
-                            pcall(function()
-                                VisualSettings.ESP_Storage[player].Highlight.FillColor = color
-                                VisualSettings.ESP_Storage[player].NameLabel.TextColor3 = color
-                                VisualSettings.ESP_Storage[player].Tracer.Color = color
-                            end)
+
+
+MainWin:CreateModule("Full Bright", function(v) local L=game:GetService("Lighting"); if v then _G.OL={Ambient=L.Ambient, Brightness=L.Brightness, GlobalShadows=L.GlobalShadows, OutdoorAmbient=L.OutdoorAmbient, ClockTime=L.ClockTime, FogEnd=L.FogEnd}; L.Ambient=Color3.new(0.7,0.7,0.7); L.Brightness=1.5; L.GlobalShadows=false; L.OutdoorAmbient=Color3.new(0.7,0.7,0.7); L.ClockTime=12; L.FogEnd=100000 else if _G.OL then for k,val in pairs(_G.OL) do L[k]=val end; _G.OL=nil end end end)
+
+MainWin:CreateModule("Noclip", function(v) if v then _G.Noclip=RunService.Stepped:Connect(function() if LocalPlayer.Character then for _,p in ipairs(LocalPlayer.Character:GetDescendants()) do if p:IsA("BasePart") and p.Name~="HumanoidRootPart" then p.CanCollide=false end end end end) else if _G.Noclip then _G.Noclip:Disconnect(); _G.Noclip=nil end end end)
+
+MainWin:CreateModule("Infinite Jump", function(v) if v then _G.InfJ=UserInputService.JumpRequest:Connect(function() if LocalPlayer.Character then local r=LocalPlayer.Character:FindFirstChild("HumanoidRootPart"); if r then r.AssemblyLinearVelocity=Vector3.new(r.AssemblyLinearVelocity.X,50,r.AssemblyLinearVelocity.Z) end end end) else if _G.InfJ then _G.InfJ:Disconnect() end end end)
+
+local Spd={En=false, Val=25}; local SpdMod=MainWin:CreateModule("Speed Boost", function(v) Spd.En=v end); SpdMod:CreateSlider("Sprint Speed", 20,40,25, function(v) Spd.Val=v end); RunService.Heartbeat:Connect(function() if Spd.En and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then local r=LocalPlayer.Character.HumanoidRootPart; local v=LocalPlayer.Character.Humanoid.MoveDirection; if v.Magnitude>0 then r.AssemblyLinearVelocity=Vector3.new(v.X*Spd.Val, r.AssemblyLinearVelocity.Y, v.Z*Spd.Val) end end end)
+
+MainWin:CreateModule("Show Chat", function(v) local c=game:GetService("TextChatService"):FindFirstChild("ChatWindowConfiguration"); if c then c.Enabled=v end end)
+
+MainWin:CreateButton("Get Radio", function() local list=Players:GetPlayers(); if #list<=1 then return end; local targets={}; for _,p in ipairs(list) do if p~=LocalPlayer then table.insert(targets,p) end end; local rP=targets[math.random(1,#targets)]; if rP.Character and rP.Backpack:FindFirstChild("Radio") and LocalPlayer.Character and not LocalPlayer.Backpack:FindFirstChild("Radio") then rP.Backpack.Radio:Clone().Parent=LocalPlayer.Backpack; Library:Notify("Success","Radio Copied",true) end end)
+
+
+
+-- Aimbot (PC)
+
+local FOVCircle = Drawing.new("Circle"); FOVCircle.Visible=false; FOVCircle.Thickness=2; FOVCircle.Transparency=0.7; FOVCircle.Radius=400; FOVCircle.NumSides=64; FOVCircle.Filled=false; _G.HeadLock.FOVCircle=FOVCircle
+
+local Crosshair = {Horizontal=Drawing.new("Line"), Vertical=Drawing.new("Line")}; for _,l in pairs(Crosshair) do l.Visible=false; l.Color=Color3.fromRGB(255,0,0); l.Thickness=2; l.Transparency=0.8 end; _G.HeadLock.Crosshair=Crosshair
+
+
+
+local function lockToHead(targetData)
+
+    if not targetData then return end
+
+    local head, char = targetData.Head, targetData.Character
+
+    local tPos = head.Position
+
+    if _G.HeadLock.Settings.LockMode == "Forecast Lock" then local r = char:FindFirstChild("HumanoidRootPart"); if r then tPos=tPos+(r.AssemblyLinearVelocity*((tPos-Camera.CFrame.Position).Magnitude/1000)*_G.HeadLock.Settings.PredictionStrength) end end
+
+    local goal = CFrame.lookAt(Camera.CFrame.Position, tPos)
+
+    if _G.HeadLock.Settings.LockMode == "Smooth lock" then Camera.CFrame = Camera.CFrame:Lerp(goal, 1/_G.HeadLock.Settings.Smoothness) else Camera.CFrame = goal end
+
+end
+
+
+
+local AimMod = CombatWin:CreateModule("Aimbot (PC)", function(v)
+
+    if v then
+
+        _G.HeadLock.RenderConnection = RunService.RenderStepped:Connect(function()
+
+            local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+
+            FOVCircle.Position = center; FOVCircle.Color = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+
+            if _G.HeadLock.Settings.ShowCrosshair then Crosshair.Horizontal.Visible=true; Crosshair.Vertical.Visible=true; Crosshair.Horizontal.From=Vector2.new(center.X-10,center.Y); Crosshair.Horizontal.To=Vector2.new(center.X+10,center.Y); Crosshair.Vertical.From=Vector2.new(center.X,center.Y-10); Crosshair.Vertical.To=Vector2.new(center.X,center.Y+10) else Crosshair.Horizontal.Visible=false; Crosshair.Vertical.Visible=false end
+
+            if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) and hasWeapon() then
+
+                if _G.HeadLock.Settings.StickyLock and _G.HeadLock.LockedTarget then
+
+                    local t = _G.HeadLock.LockedTarget
+
+                    if t.Head and t.Head.Parent and t.Character.Humanoid.Health>0 and isEnemy(t.Player) then lockToHead(t) else _G.HeadLock.LockedTarget=getBestTarget() end
+
+                else _G.HeadLock.LockedTarget=getBestTarget(); if _G.HeadLock.LockedTarget then lockToHead(_G.HeadLock.LockedTarget) end end
+
+                if _G.HeadLock.LockedTarget then Crosshair.Horizontal.Color=Color3.new(0,1,0); Crosshair.Vertical.Color=Color3.new(0,1,0) else Crosshair.Horizontal.Color=Color3.new(1,0,0); Crosshair.Vertical.Color=Color3.new(1,0,0) end
+
+            else _G.HeadLock.LockedTarget=nil; Crosshair.Horizontal.Color=Color3.new(1,0,0); Crosshair.Vertical.Color=Color3.new(1,0,0) end
+
+        end)
+
+    else if _G.HeadLock.RenderConnection then _G.HeadLock.RenderConnection:Disconnect() end; FOVCircle.Visible=false; Crosshair.Horizontal.Visible=false; Crosshair.Vertical.Visible=false end
+
+end, true)
+
+
+
+AimMod:CreateDropdown("Lock Mode", {"Instant lock", "Smooth lock", "Forecast Lock"}, function(v) _G.HeadLock.Settings.LockMode = v end)
+
+AimMod:CreateSlider("FOV", 50, 800, 80, function(v) _G.HeadLock.Settings.FOV = v; FOVCircle.Radius = v end)
+
+AimMod:CreateSlider("Smoothness", 1, 20, 3, function(v) _G.HeadLock.Settings.Smoothness = v end)
+
+AimMod:CreateSlider("Distance", 50, 3000, 1000, function(v) _G.HeadLock.Settings.MaxDistance = v end)
+
+AimMod:CreateSlider("Prediction", 0, 100, 20, function(v) _G.HeadLock.Settings.PredictionStrength = v/100 end)
+
+AimMod:CreateSwitch("Show FOV", function(v) if _G.HeadLock.RenderConnection then FOVCircle.Visible=v end end, false)
+
+AimMod:CreateSwitch("Show Crosshair", function(v) _G.HeadLock.Settings.ShowCrosshair = v; if not v then Crosshair.Horizontal.Visible=false; Crosshair.Vertical.Visible=false end end, false)
+
+AimMod:CreateSwitch("Wall Check", function(v) _G.HeadLock.Settings.WallCheck = v; _G.WallCheckSetting = v end, true)
+
+AimMod:CreateSwitch("Sticky Lock", function(v) _G.HeadLock.Settings.StickyLock = v end, false)
+
+AimMod:CreateSwitch("Team Check", function(v) _G.TeamCheckEnabled = v; _G.HeadLock.Settings.TeamCheck = v end, false)
+
+CombatWin:CreateModule("Gun Check (PC & Mobile)", function(v) _G.WeaponCheckEnabled = v end)
+
+
+
+-- Mobile
+
+local MFOV = Drawing.new("Circle"); MFOV.Visible=false; MFOV.Thickness=2; MFOV.Radius=80; MFOV.Filled=false
+
+local MX = Drawing.new("Line"); local MY = Drawing.new("Line"); MX.Visible=false; MY.Visible=false; MX.Color=Color3.new(1,1,1); MY.Color=Color3.new(1,1,1)
+
+RunService.RenderStepped:Connect(function()
+
+    local c = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+
+    MFOV.Position = c; MFOV.Color = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+
+    MFOV.Visible = _G.MobileGlobal.IsFOVOn
+
+    MX.Visible = _G.MobileGlobal.IsCrossOn; MY.Visible = _G.MobileGlobal.IsCrossOn
+
+    if _G.MobileGlobal.IsCrossOn then MX.From=Vector2.new(c.X-10,c.Y); MX.To=Vector2.new(c.X+10,c.Y); MY.From=Vector2.new(c.X,c.Y-10); MY.To=Vector2.new(c.X,c.Y+10) end
+
+end)
+
+local function ResetCharacter(char) if char and char:FindFirstChild("Head") then char.Head.Size = Vector3.new(1.2,1.2,1.2); char.Head.Transparency = 0; char.Head.CanCollide = true; char.Head.Massless = false; for _,o in pairs(char.Head:GetChildren()) do if o:IsA("Decal") or o:IsA("Texture") then o.Transparency=0 end end end end
+
+
+
+-- [修复] 优化后的 Hitbox 模块：状态检测 + 透明度修复 + 视角剔除修复
+
+local HitMod = MobileWin:CreateModule("Enable Silent Aim", function(v)
+    _G.HitboxActive = v
+    if v then
+        _G.HitboxLoop = RunService.Heartbeat:Connect(function()
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character then
+                    local head = p.Character:FindFirstChild("Head")
+                    local hum = p.Character:FindFirstChild("Humanoid") -- 获取 Humanoid 以检测生命
+
+                    local isTarget = false
+
+                    if head and hum and hum.Health > 0 then
+                        -- 团队检测逻辑
+                        local tName = p.Team and p.Team.Name or ""
+                        local checkName = tName
+                        if tName == "Class - D" then checkName = "Class-D" end -- 兼容 Class - D
+
+                        local teamAllowed = _G.SilentAimTeamSettings[checkName]
+                        -- 如果是未知队伍，默认为允许，或者根据需求调整
+                        if teamAllowed == nil then teamAllowed = true end
+                        
+                        -- Global TeamCheck 依然生效
+                        local enemyCheck = true
+                        if _G.TeamCheckEnabled and not isEnemy(p) then enemyCheck = false end
+
+                        if teamAllowed and enemyCheck then
+                            isTarget = true
+                        end
+                    end
+                        
+                    if isTarget then
+                        -- 计算目标透明度 (将 10 转换为 1.0)
+                        local targetTrans = _G.HitboxTransparency / 10
+                        
+                        -- [核心修复]: 只有当大小不正确 OR 透明度不正确时，才执行写入
+                        if head.Size.X ~= _G.HitboxSize or head.Transparency ~= targetTrans then
+                            head.Size = Vector3.new(_G.HitboxSize, _G.HitboxSize, _G.HitboxSize)
+                            head.Transparency = targetTrans
+                            head.CanCollide = false
+                            head.Massless = true
+                            -- [新增] 强制设置 LocalTransparencyModifier 防止近距离视角剔除（看不到头）
+                            head.LocalTransparencyModifier = 0 
+                            
+                            for _, o in pairs(head:GetChildren()) do
+                                if o:IsA("Decal") or o:IsA("Texture") then 
+                                    o.Transparency = targetTrans 
+                                end
+                            end
+                        end
+                    else
+                        -- 目标无效（死了，或者队伍未勾选），重置
+                        if head and head.Size.X > 2 then 
+                            ResetCharacter(p.Character) 
                         end
                     end
                 end
             end
-        end
-    end
-end)
-
--- 清理无效ESP对象（低频）
-task.spawn(function()
-    while task.wait(5) do
-        if VisualSettings.Enabled then
-            local toRemove = {}
-            for player, espObj in pairs(VisualSettings.ESP_Storage) do
-                if not player or not player.Parent then
-                    table.insert(toRemove, player)
-                end
-            end
-            for _, player in pairs(toRemove) do
-                ClearVisual(player)
-            end
-        end
-    end
-end)
-
---------------------------------------------------------------------
--- [ESP渲染循环] - 优化性能
---------------------------------------------------------------------
-local ESPUpdateCounter = 0
-RunService.RenderStepped:Connect(function()
-    if not VisualSettings.Enabled then return end
-    
-    ESPUpdateCounter = ESPUpdateCounter + 1
-    local fullUpdate = (ESPUpdateCounter % 3 == 0) -- 每3帧进行一次完整更新
-
-    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    local viewportCenter = Camera.ViewportSize
-
-    for _, player in pairs(Players:GetPlayers()) do
-        if player == LocalPlayer then continue end
-        
-        local char = player.Character
-        if not char or not char:FindFirstChild("Head") or not char:FindFirstChild("HumanoidRootPart") then
-            if VisualSettings.ESP_Storage[player] then
-                pcall(function()
-                    VisualSettings.ESP_Storage[player].Tracer.Visible = false
-                    VisualSettings.ESP_Storage[player].Highlight.Enabled = false
-                    VisualSettings.ESP_Storage[player].Billboard.Enabled = false
-                end)
-            end
-            continue
-        end
-        
-        local head = char.Head
-        local root = char.HumanoidRootPart
-        local hum = char:FindFirstChild("Humanoid")
-        
-        -- 距离检测
-        local dist = 0
-        if myRoot then
-            dist = (myRoot.Position - root.Position).Magnitude
-            if dist > VisualSettings.RenderDistance then
-                if VisualSettings.ESP_Storage[player] then
-                    pcall(function()
-                        VisualSettings.ESP_Storage[player].Tracer.Visible = false
-                        VisualSettings.ESP_Storage[player].Highlight.Enabled = false
-                        VisualSettings.ESP_Storage[player].Billboard.Enabled = false
-                    end)
-                end
-                continue
-            end
-        end
-
-        -- 确保ESP已创建
-        if not VisualSettings.ESP_Storage[player] then
-            CreateESP(player)
-        end
-
-        local espObj = VisualSettings.ESP_Storage[player]
-        if not espObj then continue end
-        
-        local color = GetPlayerColor(player)
-
-        -- 启用组件
-        pcall(function()
-            espObj.Highlight.Enabled = true
-            espObj.Billboard.Enabled = true
         end)
-
-        -- 完整更新（每3帧）
-        if fullUpdate then
-            pcall(function()
-                if espObj.Highlight.Parent ~= char then
-                    espObj.Highlight.Parent = char
-                end
-                espObj.Highlight.FillColor = color
-                espObj.Highlight.OutlineColor = Color3.new(1,1,1)
-
-                if espObj.Billboard.Adornee ~= head then
-                    espObj.Billboard.Adornee = head
-                    espObj.Billboard.Parent = char
-                end
-                
-                espObj.NameLabel.Text = player.Name
-                espObj.NameLabel.TextColor3 = color
-
-                local infoText = ""
-                if VisualSettings.ShowHealth and hum then
-                    local hp = math.floor(hum.Health)
-                    infoText = infoText .. "[HP: " .. hp .. "] "
-                end
-                
-                if myRoot and VisualSettings.ShowDistance then
-                    infoText = infoText .. "[" .. math.floor(dist) .. "m]"
-                end
-                espObj.InfoLabel.Text = infoText
-            end)
-        end
-
-        -- Tracer更新（每帧，因为位置变化快）
-        local vec, onScreen = Camera:WorldToViewportPoint(root.Position)
-        
-        if VisualSettings.ShowTracers and onScreen then
-            pcall(function()
-                espObj.Tracer.Visible = true
-                espObj.Tracer.Color = color
-                espObj.Tracer.Thickness = 1
-                espObj.Tracer.From = Vector2.new(viewportCenter.X / 2, viewportCenter.Y)
-                espObj.Tracer.To = Vector2.new(vec.X, vec.Y)
-            end)
-        else
-            pcall(function()
-                espObj.Tracer.Visible = false
-            end)
+    else
+        if _G.HitboxLoop then _G.HitboxLoop:Disconnect() end
+        for _, p in pairs(Players:GetPlayers()) do 
+            ResetCharacter(p.Character) 
         end
     end
 end)
 
---------------------------------------------------------------------
--- [Vehicle Tab]
---------------------------------------------------------------------
-local VehicleSection = VehicleTab:CreateSection("Modification")
+-- 添加队伍选择勾选框
+local teamsList = {
+    "Class-D", "Chaos Insurgency", "Scientific Department", "Security Department", 
+    "Intelligence Agency", "Mobile Task Force", "Rapid Response Team", 
+    "Medical Department", "Administrative Department", "Internal Security Department"
+}
 
-VehicleTab:CreateToggle({
-   Name = "Enable Speed & Stabilizer",
-   CurrentValue = false,
-   Flag = "VehicleMod",
-   Callback = function(Value)
-       _G.VehicleModEnabled = Value
-       ActiveFeatures.VehicleMod = Value
-       UpdateFeatureList()
-   end,
-})
-
-VehicleTab:CreateSlider({
-   Name = "Speed Multiplier",
-   Range = {0.1, 5},
-   Increment = 0.1,
-   Suffix = "x",
-   CurrentValue = 1.5,
-   Callback = function(Value)
-       _G.VehicleSpeedMult = Value
-   end,
-})
-
-VehicleTab:CreateSlider({
-   Name = "Turn Sensitivity",
-   Range = {0.01, 0.1},
-   Increment = 0.01,
-   Suffix = "",
-   CurrentValue = 0.02,
-   Callback = function(Value)
-       _G.VehicleTurnSpeed = Value
-   end,
-})
-
--- 载具物理循环
-RunService.Heartbeat:Connect(function()
-    if not _G.VehicleModEnabled then return end
-
-    local char = LocalPlayer.Character
-    if not char then return end
-    
-    local humanoid = char:FindFirstChild("Humanoid")
-    if not humanoid then return end
-    
-    local seat = humanoid.SeatPart
-    
-    if seat and seat:IsA("VehicleSeat") then
-        local vehicleModel = seat.Parent
-        local primaryPart = vehicleModel.PrimaryPart or vehicleModel:FindFirstChild("Body") or vehicleModel:FindFirstChild("Hull")
-        
-        if primaryPart then
-            local currentPivot = vehicleModel:GetPivot()
-            local newPivot = currentPivot
-            
-            -- 1. 直线加速
-            if seat.Throttle ~= 0 then
-                local moveVector = currentPivot.LookVector * (seat.Throttle * _G.VehicleSpeedMult)
-                newPivot = newPivot + moveVector
-            end
-            
-            -- 2. 转向修正
-            if seat.Steer ~= 0 then
-                local rotateStep = -seat.Steer * _G.VehicleTurnSpeed
-                newPivot = newPivot * CFrame.Angles(0, rotateStep, 0)
-            end
-            
-            -- 3. 应用位移
-            if seat.Throttle ~= 0 or seat.Steer ~= 0 then
-                vehicleModel:PivotTo(newPivot)
-            end
-            
-            -- 4. 强制稳定 (防止翻车)
-            primaryPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-        end
-    end
-end)
-
---------------------------------------------------------------------
--- [Other Tab] (Config System & Tools) - 完美修复版
---------------------------------------------------------------------
-local OtherSection = OtherTab:CreateSection("UI Setting")
-
-OtherTab:CreateToggle({
-   Name = "Show Feature List",
-   CurrentValue = false,
-   Flag = "ShowList",
-   Callback = function(Value)
-       ListFrame.Visible = Value
-       UpdateFeatureList()
-   end,
-})
-
-local ConfigSection = OtherTab:CreateSection("Configuration System")
-
-local ConfigNameInput = ""
-local ConfigFolder = "CatKing_Configs" -- 确保文件夹名称正确
-
--- 1. 确保文件夹存在
-pcall(function()
-    if not isfolder(ConfigFolder) then makefolder(ConfigFolder) end
-end)
-
-OtherTab:CreateInput({
-   Name = "Config Name",
-   PlaceholderText = "Enter name...",
-   RemoveTextAfterFocusLost = false,
-   Callback = function(Text)
-       ConfigNameInput = Text
-   end,
-})
-
-OtherTab:CreateButton({
-    Name = "Save Config",
-    Callback = function()
-        local name = ConfigNameInput
-        if name == "" or name == nil then
-            -- 自动命名逻辑
-            local count = 0
-            pcall(function()
-                local files = listfiles(ConfigFolder)
-                count = #files + 1
-            end)
-            name = "Config " .. count
-        end
-        
-        local SaveData = {
-            Aimbot = AimbotSettings,
-            Visual = VisualSettings,
-            Features = ActiveFeatures,
-            Mobile = MobileSettings,
-            Vehicle = {Speed = _G.VehicleSpeedMult, Turn = _G.VehicleTurnSpeed}
-        }
-        
-        local json = HttpService:JSONEncode(SaveData)
-        writefile(ConfigFolder .. "/" .. name .. ".json", json)
-        
-        Rayfield:Notify({
-            Title = "Configuration Saved",
-            Content = "Saved as: " .. name,
-            Duration = 3,
-            Image = 4483362458,
-        })
-    end,
-})
-
--- 2. 修复：安全的配置文件获取函数 (兼容所有手机注入器)
-local function GetConfigs()
-    local names = {}
-    pcall(function()
-        if isfolder(ConfigFolder) then
-            local files = listfiles(ConfigFolder)
-            for _, path in pairs(files) do
-                -- 使用 match 提取文件名，无论路径是 /storage/... 还是 workspace/...
-                local file = path:match("([^/]+)$")
-                if file then
-                     -- 移除 .json 后缀
-                    if file:sub(-5) == ".json" then
-                        file = file:sub(1, -6)
-                    end
-                    table.insert(names, file)
-                end
-            end
-        end
-    end)
-    return names
+for _, teamName in ipairs(teamsList) do
+    HitMod:CreateSwitch(teamName, function(v)
+        _G.SilentAimTeamSettings[teamName] = v
+    end, true) -- 默认 true
 end
 
-local ConfigList = GetConfigs()
-if #ConfigList == 0 then table.insert(ConfigList, "None") end
+-- [已修改] 移除了 Hitbox Size 和 Hitbox Trans 的 Slider，默认值已在全局变量中设置
 
-local SelectedConfigToLoad = ConfigList[1]
 
-local LoadDropdown = OtherTab:CreateDropdown({
-   Name = "Select Config",
-   Options = ConfigList,
-   CurrentOption = SelectedConfigToLoad, 
-   Flag = "ConfigLoader",
-   Callback = function(Option)
-       if Option and Option[1] then
-           SelectedConfigToLoad = Option[1]
-       end
-   end,
-})
 
-OtherTab:CreateButton({
-    Name = "Load Selected Config",
-    Callback = function()
-        if not SelectedConfigToLoad or SelectedConfigToLoad == "None" then
-             Rayfield:Notify({Title = "Error", Content = "Please select a valid config.", Duration = 2})
-             return 
-        end
-        
-        local success, content = pcall(function() 
-             return readfile(ConfigFolder .. "/" .. SelectedConfigToLoad .. ".json")
+local MobAimMod = MobileWin:CreateModule("Enable Mobile Aimbot", function(v)
+    _G.MobileGlobal.IsAimbotGuiOn = v
+    if v then
+        local g = Instance.new("ScreenGui", game.CoreGui); g.Name="MobAim"; local b = Instance.new("TextButton", g); b.Size=UDim2.new(0,60,0,60); b.Position=UDim2.new(0.85,0,0.6,0); b.Text="AIM"; b.BackgroundColor3=Color3.fromRGB(255,50,50); Instance.new("UICorner",b).CornerRadius=UDim.new(0,30)
+        local drag, dStart, sPos; b.InputBegan:Connect(function(i) if i.UserInputType.Name:match("Touch") then drag=true; dStart=i.Position; sPos=b.Position end end); UserInputService.InputChanged:Connect(function(i) if drag and i.UserInputType.Name:match("Touch") then local d=i.Position-dStart; b.Position=UDim2.new(sPos.X.Scale, sPos.X.Offset+d.X, sPos.Y.Scale, sPos.Y.Offset+d.Y) end end); UserInputService.InputEnded:Connect(function(i) if i.UserInputType.Name:match("Touch") then drag=false end end)
+        local aimLoop = RunService.RenderStepped:Connect(function() 
+            if _G.MobileGlobal.AimbotActive then 
+                local bT, bD = nil, math.huge; 
+                local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2); 
+                for _,p in pairs(Players:GetPlayers()) do 
+                    if p~=LocalPlayer and p.Character and isEnemy(p) then 
+                        local h = p.Character:FindFirstChild("Head"); 
+                        if h then 
+                            local sP, oS = Camera:WorldToViewportPoint(h.Position); 
+                            if oS then 
+                                -- Wall Check Logic
+                                if _G.WallCheckSetting and not checkVisible(h) then 
+                                    -- skip
+                                else
+                                    local dist = (Vector2.new(sP.X, sP.Y) - center).Magnitude; 
+                                    if dist < 80 and dist < bD then bD=dist; bT=h end 
+                                end
+                            end 
+                        end 
+                    end 
+                end; 
+                if bT then Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, bT.Position) end 
+            end 
         end)
-        
-        if not success then 
-            Rayfield:Notify({Title = "Error", Content = "Failed to read file.", Duration = 2})
-            return 
-        end
- 
-        local data = HttpService:JSONDecode(content)
-        
-        -- 恢复设置
-        if data.Aimbot then 
-            for k,v in pairs(data.Aimbot) do AimbotSettings[k] = v end
-            if AimbotSettings.FOV then FOVCircle.Radius = AimbotSettings.FOV end
-        end
-        
-        if data.Visual then 
-             VisualSettings.Enabled = data.Visual.Enabled
-             VisualSettings.ShowTracers = data.Visual.ShowTracers
-             VisualSettings.ShowHealth = data.Visual.ShowHealth
-             VisualSettings.ShowDistance = data.Visual.ShowDistance
-        end
-        
-        if data.Mobile then
-             MobileSettings.FOV = data.Mobile.FOV
-             MobileFOVCircle.Radius = MobileSettings.FOV
-             -- 恢复偏移量
-             if data.Mobile.OffsetX then MobileSettings.OffsetX = data.Mobile.OffsetX end
-             if data.Mobile.OffsetY then MobileSettings.OffsetY = data.Mobile.OffsetY end
-        end
- 
-        Rayfield:Notify({
-            Title = "Configuration Loaded",
-            Content = "Settings loaded from: " .. SelectedConfigToLoad,
-            Duration = 3,
-            Image = 4483362458,
-         })
-    end,
-})
-
--- [新增] 删除配置功能
-OtherTab:CreateButton({
-    Name = "Delete Selected Config",
-    Callback = function()
-        if not SelectedConfigToLoad or SelectedConfigToLoad == "None" then
-             Rayfield:Notify({Title = "Error", Content = "Please select a config to delete.", Duration = 2})
-             return 
-        end
-
-        local filePath = ConfigFolder .. "/" .. SelectedConfigToLoad .. ".json"
-        
-        local success, err = pcall(function()
-            if isfile(filePath) then
-                delfile(filePath)
-            end
-        end)
-        
-        if success then
-            Rayfield:Notify({
-                Title = "Config Deleted", 
-                Content = "Deleted: " .. SelectedConfigToLoad, 
-                Duration = 2,
-                Image = 4483362458
-            })
-            
-            -- 自动刷新列表
-            local newlist = GetConfigs()
-            if #newlist == 0 then 
-                table.insert(newlist, "None")
-                SelectedConfigToLoad = "None"
-            else
-                SelectedConfigToLoad = newlist[1]
-            end
-            LoadDropdown:Refresh(newlist)
-        else
-            Rayfield:Notify({Title = "Error", Content = "Failed to delete file.", Duration = 2})
-        end
-    end,
-})
-
-OtherTab:CreateButton({
-   Name = "Refresh Config List",
-   Callback = function()
-       local newlist = GetConfigs()
-       local msg = "Found " .. #newlist .. " configs."
-       
-       if #newlist == 0 then 
-           table.insert(newlist, "None") 
-           msg = "No configs found in folder."
-       end
-       
-       LoadDropdown:Refresh(newlist)
-       Rayfield:Notify({Title = "Refreshed", Content = msg, Duration = 2})
-   end,
-})
-
-local UtilSection = OtherTab:CreateSection("Tools")
-
-OtherTab:CreateButton({
-   Name = "Reset Character",
-   Callback = function()
-       if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-           LocalPlayer.Character.Humanoid.Health = 0
-       end
-   end,
-})
-
-OtherTab:CreateButton({
-   Name = "Rejoin Server",
-   Callback = function()
-       game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, Players.LocalPlayer)
-   end,
-})
-
--- 无限子弹循环 (低频优化)
-task.spawn(function()
-    while task.wait(0.5) do 
-        if _G.InfiniteAmmoEnabled then
-             local Character = LocalPlayer.Character
-             if Character then
-                 local Tool = Character:FindFirstChildWhichIsA("Tool")
-                 if Tool then
-                     local LocalAmmoFolder = Tool:FindFirstChild("LocalTAmmo")
-                     if LocalAmmoFolder then
-                         for _, folder in pairs(LocalAmmoFolder:GetChildren()) do
-                             if folder:FindFirstChild("Ammo") then
-                                 if folder.Ammo.MaxValue < 9999 then
-                                     folder.Ammo.MaxValue = 9999
-                                 end
-                                 folder.Ammo.Value = 9999
-                             end
-                             if folder:FindFirstChild("Stored") then
-                                  folder.Stored.MaxValue = 9999
-                                  folder.Stored.Value = 9999
-                             end
-                          end
-                      end
-                  end
-             end
-        end
-    end
+        b.MouseButton1Click:Connect(function() _G.MobileGlobal.AimbotActive = not _G.MobileGlobal.AimbotActive; b.BackgroundColor3=_G.MobileGlobal.AimbotActive and Color3.new(0,1,0) or Color3.fromRGB(255,50,50) end); _G.MobileRes = g; _G.MobileAimLoop = aimLoop
+    else if _G.MobileRes then _G.MobileRes:Destroy() end; if _G.MobileAimLoop then _G.MobileAimLoop:Disconnect() end; _G.MobileGlobal.AimbotActive = false end
 end)
 
-Rayfield:Notify({
-   Title = "System Loaded",
-   Content = "Mobile Aimbot & Config System Ready.",
-   Duration = 5,
-   Image = 4483362458,
-})
+MobAimMod:CreateSwitch("Team Check", function(v) _G.TeamCheckEnabled = v end, false)
+MobAimMod:CreateSwitch("Wall Check", function(v) _G.WallCheckSetting = v end, true)
+
+MobileWin:CreateModule("Show FOV Circle", function(v) _G.MobileGlobal.IsFOVOn = v end)
+
+MobileWin:CreateModule("Show Crosshair", function(v) _G.MobileGlobal.IsCrossOn = v end)
+
+
+
+-- SCP
+
+local scps = {"SCP-016", "SCP-016", "SCP-023", "SCP-299", "SCP-049", "SCP-066", "SCP-079", "SCP-087", "SCP-093", "SCP-096", "SCP-1025", "SCP-1299", "SCP-131", "SCP-173", "SCP-2950", "SCP-316", "SCP-999"}
+
+local function toggleSCP(n, s) local f=workspace:FindFirstChild("SCPs"); if not f then return end; local m=f:FindFirstChild(n); if not m then return end; local h=m:FindFirstChildOfClass("Highlight"); if s then if not h then h=Instance.new("Highlight", m); h.FillColor=Color3.new(1,0,0); h.OutlineColor=Color3.new(1,1,0) end else if h then h:Destroy() end end end
+
+for _,s in ipairs(scps) do SCPWin:CreateModule(s.." ESP", function(v) toggleSCP(s,v) end) end
+
+SCPWin:CreateButton("Enable All", function() for _,s in ipairs(scps) do toggleSCP(s,true) end end)
+
+SCPWin:CreateButton("Disable All", function() for _,s in ipairs(scps) do toggleSCP(s,false) end end)
+
+
+
+-- Other
+
+MiscWin:CreateButton("Copy Discord Link", function() setclipboard("https://discord.gg/QtVMrPaM"); Library:Notify("Discord", "Copied!", true) end)
+
+-- [已添加] Anti-AFK 功能
+
+MiscWin:CreateModule("Anti AFK", function(v)
+
+    if v then
+
+        _G.AntiAFKConn = LocalPlayer.Idled:Connect(function()
+
+            game:GetService("VirtualUser"):Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+
+            task.wait(1)
+
+            game:GetService("VirtualUser"):Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+
+        end)
+
+    else
+
+        if _G.AntiAFKConn then _G.AntiAFKConn:Disconnect(); _G.AntiAFKConn = nil end
+
+    end
+
+end)
+
+
+
+--------------------------------------------------------------------------------
+
+-- [TAB 6: Config System v2 - 完全重构]
+
+--------------------------------------------------------------------------------
+
+local CFG = {
+
+    Folder = "CatKing-Configs",
+
+    Current = "",
+
+    Data = {}
+
+}
+
+
+
+-- 初始化文件夹
+
+if not isfolder(CFG.Folder) then makefolder(CFG.Folder) end
+
+
+
+-- 保存当前设置到内存
+
+function CFG:Capture()
+
+    self.Data = {
+
+        HitboxSize = _G.HitboxSize,
+
+        HitboxTrans = _G.HitboxTransparency,
+
+        AimbotFOV = _G.HeadLock.Settings.FOV,
+
+        AimbotSmooth = _G.HeadLock.Settings.Smoothness,
+
+        AimbotDist = _G.HeadLock.Settings.MaxDistance,
+
+        AimbotPred = _G.HeadLock.Settings.PredictionStrength,
+
+        LockMode = _G.HeadLock.Settings.LockMode,
+
+        WallCheck = _G.WallCheckSetting,
+
+        TeamCheck = _G.TeamCheckEnabled,
+
+        WeaponCheck = _G.WeaponCheckEnabled
+
+    }
+
+end
+
+
+
+-- 应用配置到全局变量
+
+function CFG:Apply()
+
+    if self.Data.HitboxSize then _G.HitboxSize = self.Data.HitboxSize end
+
+    if self.Data.HitboxTrans then _G.HitboxTransparency = self.Data.HitboxTrans end
+
+    if self.Data.AimbotFOV then 
+
+        _G.HeadLock.Settings.FOV = self.Data.AimbotFOV
+
+        _G.HeadLock.FOVCircle.Radius = self.Data.AimbotFOV
+
+    end
+
+    if self.Data.AimbotSmooth then _G.HeadLock.Settings.Smoothness = self.Data.AimbotSmooth end
+
+    if self.Data.AimbotDist then _G.HeadLock.Settings.MaxDistance = self.Data.AimbotDist end
+
+    if self.Data.AimbotPred then _G.HeadLock.Settings.PredictionStrength = self.Data.AimbotPred end
+
+    if self.Data.LockMode then _G.HeadLock.Settings.LockMode = self.Data.LockMode end
+
+    if self.Data.WallCheck ~= nil then 
+
+        _G.WallCheckSetting = self.Data.WallCheck
+
+        _G.HeadLock.Settings.WallCheck = self.Data.WallCheck
+
+    end
+
+    if self.Data.TeamCheck ~= nil then 
+
+        _G.TeamCheckEnabled = self.Data.TeamCheck
+
+        _G.HeadLock.Settings.TeamCheck = self.Data.TeamCheck
+
+    end
+
+    if self.Data.WeaponCheck ~= nil then _G.WeaponCheckEnabled = self.Data.WeaponCheck end
+
+end
+
+
+
+-- 保存配置到文件
+
+function CFG:Save(name)
+
+    if not name or name == "" then
+
+        local idx = 1
+
+        while isfile(self.Folder.."/cfg"..idx..".json") do idx = idx + 1 end
+
+        name = "cfg"..idx
+
+    end
+
+    
+
+    self:Capture()
+
+    local ok = pcall(function()
+
+        writefile(self.Folder.."/"..name..".json", HttpService:JSONEncode(self.Data))
+
+    end)
+
+    
+
+    return ok, name
+
+end
+
+
+
+-- 加载配置从文件
+
+function CFG:Load(name)
+
+    if not name or name == "" then name = "cfg1" end
+
+    local path = self.Folder.."/"..name..".json"
+
+    
+
+    if not isfile(path) then return false, "Not found" end
+
+    
+
+    local ok, result = pcall(function()
+
+        local raw = readfile(path)
+
+        return HttpService:JSONDecode(raw)
+
+    end)
+
+    
+
+    if not ok then return false, "Parse error" end
+
+    
+
+    self.Data = result
+
+    self:Apply()
+
+    return true, "Loaded"
+
+end
+
+
+
+-- 删除配置文件
+
+function CFG:Delete(name)
+
+    if not name or name == "" then return false, "No name" end
+
+    local path = self.Folder.."/"..name..".json"
+
+    
+
+    if not isfile(path) then return false, "Not found" end
+
+    
+
+    local ok = pcall(function() delfile(path) end)
+
+    return ok, ok and "Deleted" or "Failed"
+
+end
+
+
+
+-- 列出所有配置
+
+function CFG:List()
+
+    local files = listfiles(self.Folder)
+
+    local names = {}
+
+    for _, fp in ipairs(files) do
+
+        local n = fp:match("([^/\\]+)%.json$")
+
+        if n then table.insert(names, n) end
+
+    end
+
+    return names
+
+end
+
+
+
+-- 创建UI (使用正确的 API 方法)
+
+local SaveMod = ConfigWin:CreateModule("💾 Save Config", function(enabled)
+
+    if enabled then
+
+        local ok, name = CFG:Save("")
+
+        Library:Notify("Config", ok and ("✅ Saved: "..name) or "❌ Failed", ok)
+
+        task.wait(0.3)
+
+        SaveMod:Set(false)
+
+    end
+
+end, false)
+
+
+
+local LoadMod1 = ConfigWin:CreateModule("📂 Load cfg1", function(enabled)
+
+    if enabled then
+
+        local ok, msg = CFG:Load("cfg1")
+
+        Library:Notify("Config", ok and "✅ Loaded cfg1" or ("❌ "..msg), ok)
+
+        task.wait(0.3)
+
+        LoadMod1:Set(false)
+
+    end
+
+end, false)
+
+
+
+local LoadMod2 = ConfigWin:CreateModule("📂 Load cfg2", function(enabled)
+
+    if enabled then
+
+        local ok, msg = CFG:Load("cfg2")
+
+        Library:Notify("Config", ok and "✅ Loaded cfg2" or ("❌ "..msg), ok)
+
+        task.wait(0.3)
+
+        LoadMod2:Set(false)
+
+    end
+
+end, false)
+
+
+
+local LoadMod3 = ConfigWin:CreateModule("📂 Load cfg3", function(enabled)
+
+    if enabled then
+
+        local ok, msg = CFG:Load("cfg3")
+
+        Library:Notify("Config", ok and "✅ Loaded cfg3" or ("❌ "..msg), ok)
+
+        task.wait(0.3)
+
+        LoadMod3:Set(false)
+
+    end
+
+end, false)
+
+
+
+local DelMod1 = ConfigWin:CreateModule("🗑️ Delete cfg1", function(enabled)
+
+    if enabled then
+
+        local ok, msg = CFG:Delete("cfg1")
+
+        Library:Notify("Config", ok and "✅ Deleted cfg1" or ("❌ "..msg), ok)
+
+        task.wait(0.3)
+
+        DelMod1:Set(false)
+
+    end
+
+end, false)
+
+
+
+local DelMod2 = ConfigWin:CreateModule("🗑️ Delete cfg2", function(enabled)
+
+    if enabled then
+
+        local ok, msg = CFG:Delete("cfg2")
+
+        Library:Notify("Config", ok and "✅ Deleted cfg2" or ("❌ "..msg), ok)
+
+        task.wait(0.3)
+
+        DelMod2:Set(false)
+
+    end
+
+end, false)
+
+
+
+local ListMod = ConfigWin:CreateModule("📋 List All Configs", function(enabled)
+
+    if enabled then
+
+        local list = CFG:List()
+
+        if #list == 0 then
+
+            Library:Notify("Config", "❌ No configs found", false)
+
+        else
+
+            Library:Notify("Config", "Found "..#list..": "..table.concat(list, ", "), true)
+
+        end
+
+        task.wait(0.3)
+
+        ListMod:Set(false)
+
+    end
+
+end, false)
+
+
+
+-- [强制关闭所有UI等待灵动岛点击]
+
+for _, winData in pairs(Library.Globals.Windows) do
+
+    if winData.Main then winData.Main.Visible = false end
+
+end
+
+local back = game.CoreGui:FindFirstChild("YC_GUI_Final") and game.CoreGui.YC_GUI_Final:FindFirstChild("Backdrop")
+
+if back then back.Visible = false end
+
+
+
+Library:Notify("Loaded", "Cat King v1.8", true)      
