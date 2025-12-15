@@ -563,6 +563,50 @@ function Library:CreateWindow(title, pos, isMain, isSub)
         Btn.MouseButton1Click:Connect(function() CreateRipple(Btn); pcall(callback) end)
         RegElem(Btn, Txt, nil)
     end
+    
+    function Window:CreateInput(text, placeholder, callback)
+        local BoxH = 30
+        local Wrapper = Instance.new("Frame"); Wrapper.Parent = Container; Wrapper.BackgroundTransparency=1; Wrapper.Size=UDim2.new(1,0,0,BoxH + 4)
+        local Label = Instance.new("TextLabel"); Label.Parent = Wrapper; Label.Text = text..":"; Label.Font = Enum.Font.GothamSemibold; Label.TextSize=math.clamp(Library.Config.ItemHeight*0.42, 10, 20); Label.BackgroundTransparency = 1; Label.Size = UDim2.new(0, 80, 1, 0); Label.Position = UDim2.new(0, 10, 0, 0); Label.TextXAlignment = Enum.TextXAlignment.Left; RegisterObject(Label, "TextDark")
+        local InputBg = Instance.new("Frame"); InputBg.Parent = Wrapper; InputBg.BackgroundColor3 = Color3.fromRGB(40, 40, 45); InputBg.Size = UDim2.new(1, -100, 0, BoxH); InputBg.Position = UDim2.new(0, 90, 0.5, 0); InputBg.AnchorPoint = Vector2.new(0, 0.5); InputBg.BorderSizePixel = 0
+        local Corner = Instance.new("UICorner"); Corner.CornerRadius = UDim.new(0, 6); Corner.Parent = InputBg
+        local TextBox = Instance.new("TextBox"); TextBox.Parent = InputBg; TextBox.BackgroundTransparency = 1; TextBox.Size = UDim2.new(1, -10, 1, 0); TextBox.Position = UDim2.new(0, 5, 0, 0); TextBox.Font = Enum.Font.Gotham; TextBox.Text = ""; TextBox.PlaceholderText = placeholder or "Input..."; TextBox.TextSize = 12; TextBox.TextColor3 = Color3.new(1,1,1); TextBox.PlaceholderColor3 = Color3.fromRGB(150,150,150); TextBox.TextXAlignment = Enum.TextXAlignment.Left; TextBox.ClearTextOnFocus = false
+        TextBox.FocusLost:Connect(function(enter) if enter then pcall(callback, TextBox.Text); Library:Notify("Input Applied", true) end end)
+        RegElem(Wrapper, Label, nil)
+    end
+
+    function Window:CreateDropdown(txt, opts, call)
+        local H = Library.Config.ItemHeight
+        local Base=Instance.new("Frame"); Base.Parent=Container; Base.BackgroundTransparency=1; Base.Size=UDim2.new(1,0,0,H); Base.ClipsDescendants=true; Base.BorderSizePixel=0
+        local Main=Instance.new("TextButton"); Main.Parent=Base; Main.BackgroundTransparency=1; Main.Size=UDim2.new(1,0,0,H); Main.Text=""; Main.AutoButtonColor=false; Main.BorderSizePixel=0
+        RegisterStyle(Main, false, 6)
+        local L=Instance.new("TextLabel"); L.Parent=Main; L.Text=txt.." >"; L.Font=Enum.Font.GothamSemibold; L.TextSize=math.clamp(H*0.42, 10, 20); L.BackgroundTransparency=1; L.Size=UDim2.new(1,-20,1,0); L.Position=UDim2.new(0,10,0,0); L.TextXAlignment=Enum.TextXAlignment.Left; RegisterObject(L,"TextDark")
+        local Opts=Instance.new("Frame"); Opts.Parent=Base; Opts.Position=UDim2.new(0,0,0,H); Opts.Size=UDim2.new(1,0,0,0); Opts.BackgroundTransparency=1; Opts.BorderSizePixel=0
+        local OList=Instance.new("UIListLayout"); OList.Parent=Opts; OList.Padding=UDim.new(0,0)
+        local open = false
+        
+        local function AddOption(o)
+             local Ob=Instance.new("TextButton"); Ob.Parent=Opts; Ob.Size=UDim2.new(1,0,0,22); Ob.BackgroundTransparency=1; Ob.BorderSizePixel=0; Ob.Text=o; Ob.Font=Enum.Font.Gotham; Ob.TextSize=11; Ob.TextColor3=Color3.fromRGB(200,200,200); Ob.BackgroundColor3 = Color3.fromRGB(30,30,35)
+             Ob.MouseButton1Click:Connect(function() L.Text=txt..": "..o; open=false; local nh=H; TweenService:Create(Base,TweenInfo.new(0.3,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=UDim2.new(1,0,0,nh)}):Play(); local c; c=RunService.RenderStepped:Connect(function() List:ApplyLayout(); if winData.RefreshHeight then winData.RefreshHeight() end; if Base.Size.Y.Offset==nh then c:Disconnect() end end); pcall(call,o) end)
+        end
+        for _,o in ipairs(opts) do AddOption(o) end
+        
+        Main.MouseButton1Click:Connect(function() open=not open; local optionCount = #Opts:GetChildren() - 1; if optionCount < 0 then optionCount = 0 end; local nh=open and (H+(optionCount*22)) or H; TweenService:Create(Base,TweenInfo.new(0.3,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=UDim2.new(1,0,0,nh)}):Play(); local c; c=RunService.RenderStepped:Connect(function() List:ApplyLayout(); if winData.RefreshHeight then winData.RefreshHeight() end; if math.abs(Base.Size.Y.Offset-nh)<1 then c:Disconnect() end end) end)
+        
+        RegElem(Base, L, nil)
+        
+        local DropController = {}
+        function DropController:Refresh(newOpts, resetText)
+            for _, c in pairs(Opts:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
+            for _, o in ipairs(newOpts) do AddOption(o) end
+            if open then
+                 local optionCount = #newOpts; local nh = H + (optionCount * 22)
+                 TweenService:Create(Base,TweenInfo.new(0.3,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=UDim2.new(1,0,0,nh)}):Play()
+            end
+            if resetText then L.Text = txt.." >" end
+        end
+        return DropController
+    end
 
     function Window:BindWindow(subWindowName, defaultState)
         local Mod = self:CreateModule(subWindowName, function(bool)
