@@ -694,6 +694,16 @@ function Library:CreateWindow(title, pos, isMain, isSub)
             UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then d=false end end)
             UserInputService.InputChanged:Connect(function(i) if d and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then local p=math.clamp((i.Position.X-B.AbsolutePosition.X)/B.AbsoluteSize.X,0,1); v=math.floor(min+(max-min)*p); L.Text=txt..": "..v; Fil.Size=UDim2.new(p,0,1,0); pcall(call,v) end end)
             pcall(call, v)
+            return {
+                Set = function(selfArg, val)
+                    val = math.clamp(val, min, max)
+                    v = val
+                    L.Text = txt..": "..v
+                    local p = (v - min) / (max - min)
+                    Fil.Size = UDim2.new(p, 0, 1, 0)
+                    pcall(call, v)
+                end
+            }
         end
 
         -- [开关 Switch]
@@ -705,6 +715,13 @@ function Library:CreateWindow(title, pos, isMain, isSub)
             local Ind=Instance.new("Frame"); Ind.Parent=Box; Ind.Size=UDim2.new(1,-2,1,-2); Ind.Position=UDim2.new(0,1,0,1); Ind.Visible=on; Ind.BorderSizePixel=0; RegisterObject(Ind,"Accent")
             B.MouseButton1Click:Connect(function() on=not on; Ind.Visible=on; pcall(call, on) end)
             if on then pcall(call, on) end
+            return {
+                Set = function(selfArg, val)
+                    on = val
+                    Ind.Visible = on
+                    pcall(call, on)
+                end
+            }
         end
 
         -- [下拉框 Dropdown]
